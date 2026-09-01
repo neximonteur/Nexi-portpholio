@@ -1,0 +1,53 @@
+{
+  "categories": ["Gaming", "Vlog", "Clip", "Short / TikTok", "Dev perso", "Business"],
+  "videos": [
+    {
+      "id": "demo1",
+      "title": "Highlight session ranked",
+      "category": "Gaming",
+      "url": "https://www.youtube.com/",
+      "thumb": "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop",
+      "desc": "Montage nerveux, cuts sur le beat, focus sur les meilleures actions."
+    },
+    {
+      "id": "demo2",
+      "title": "Une semaine dans ma vie",
+      "category": "Vlog",
+      "url": "https://www.youtube.com/",
+      "thumb": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=800&auto=format&fit=crop",
+      "desc": "Storytelling doux, transitions naturelles, ambiance posée."
+    },
+    {
+      "id": "demo3",
+      "title": "Clip artiste — sortie single",
+      "category": "Clip",
+      "url": "https://www.youtube.com/",
+      "thumb": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=800&auto=format&fit=crop",
+      "desc": "Color grading cinéma et rythme calé sur la musique."
+    },
+    {
+      "id": "demo4",
+      "title": "Format court réseaux",
+      "category": "Short / TikTok",
+      "url": "https://www.youtube.com/",
+      "thumb": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=800&auto=format&fit=crop",
+      "desc": "Accroche dans les 2 premières secondes, sous-titres dynamiques."
+    },
+    {
+      "id": "demo5",
+      "title": "Vidéo présentation produit",
+      "category": "Business",
+      "url": "https://www.youtube.com/",
+      "thumb": "https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=800&auto=format&fit=crop",
+      "desc": "Ton professionnel, motion design épuré, message clair."
+    },
+    {
+      "id": "demo6",
+      "title": "Routine du matin",
+      "category": "Dev perso",
+      "url": "https://www.youtube.com/",
+      "thumb": "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800&auto=format&fit=crop",
+      "desc": "Ambiance calme, musique douce, montage contemplatif."
+    }
+  ]
+}
