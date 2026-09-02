@@ -3,6 +3,7 @@
    ========================================================== */
 
 const API_URL = "/api/videos";
+const FALLBACK_THUMB = "https://images.unsplash.com/photo-1611162616805-6a4bb1d5db7f?q=80&w=800&auto=format&fit=crop";
 
 let state = {
   videos: [],
@@ -115,11 +116,11 @@ function renderGrid() {
     <div class="card" data-id="${v.id}">
       <div class="thumb">
         <span class="badge ${catClass(v.category)}">${escapeHtml(v.category)}</span>
-        <img src="${escapeAttr(v.thumb)}" alt="${escapeAttr(v.title)}" loading="lazy">
+        <img src="${escapeAttr(v.thumb)}" alt="${escapeAttr(v.title)}" loading="lazy" onerror="this.src='${FALLBACK_THUMB}'">
         <div class="playdot">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="24" r="24" fill="white" fill-opacity="0.92"/>
-            <path d="M19 15L33 24L19 33V15Z" fill="#201A2B"/>
+            <path d="M19 15L33 24L19 33V15Z" fill="#262220"/>
           </svg>
         </div>
       </div>
@@ -353,3 +354,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   document.getElementById("modalGo").addEventListener("click", closeVideoModal);
 });
+
