@@ -19,6 +19,21 @@ const DEFAULT_DATA = {
   videos: []
 };
 
+function getVideoStore(event, context) {
+  // En environnement Netlify Functions, il faut parfois passer les
+  // informations de connexion explicitement pour que Netlify Blobs
+  // fonctionne de manière fiable (sinon échec silencieux).
+  try {
+    return getStore(STORE_NAME);
+  } catch (e) {
+    return getStore({
+      name: STORE_NAME,
+      siteID: process.env.NETLIFY_SITE_ID || context?.site?.id,
+      token: process.env.NETLIFY_BLOBS_TOKEN
+    });
+  }
+}
+
 function cors(body, statusCode = 200) {
   return {
     statusCode,
@@ -32,16 +47,25 @@ function cors(body, statusCode = 200) {
   };
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod === "OPTIONS") {
     return cors({});
   }
 
-  const store = getStore(STORE_NAME);
+  let store;
+  try {
+    store = getVideoStore(event, context);
+  } catch (e) {
+    return cors({ error: "Erreur de connexion au stockage: " + e.message }, 500);
+  }
 
   if (event.httpMethod === "GET") {
-    const data = (await store.get(KEY, { type: "json" })) || DEFAULT_DATA;
-    return cors(data);
+    try {
+      const data = (await store.get(KEY, { type: "json" })) || DEFAULT_DATA;
+      return cors(data);
+    } catch (e) {
+      return cors(DEFAULT_DATA);
+    }
   }
 
   if (event.httpMethod === "POST") {
@@ -56,7 +80,12 @@ exports.handler = async (event) => {
       return cors({ error: "Mot de passe incorrect." }, 401);
     }
 
-    const data = (await store.get(KEY, { type: "json" })) || DEFAULT_DATA;
+    let data;
+    try {
+      data = (await store.get(KEY, { type: "json" })) || DEFAULT_DATA;
+    } catch (e) {
+      data = DEFAULT_DATA;
+    }
 
     if (payload.action === "addVideo") {
       const video = payload.video;
@@ -70,17 +99,27 @@ exports.handler = async (event) => {
         data.categories.push(video.category);
       }
 
-      await store.setJSON(KEY, data);
+      try {
+        await store.setJSON(KEY, data);
+      } catch (e) {
+        return cors({ error: "Erreur de sauvegarde: " + e.message }, 500);
+      }
       return cors({ success: true, data });
     }
 
     if (payload.action === "deleteVideo") {
       data.videos = data.videos.filter(v => v.id !== payload.id);
-      await store.setJSON(KEY, data);
+      try {
+        await store.setJSON(KEY, data);
+      } catch (e) {
+        return cors({ error: "Erreur de sauvegarde: " + e.message }, 500);
+      }
       return cors({ success: true, data });
     }
 
     if (payload.action === "checkPassword") {
+      // Le mot de passe a déjà été vérifié plus haut (ligne 55-57),
+      // donc on arrive ici seulement si le mot de passe est correct.
       return cors({ success: true });
     }
 
