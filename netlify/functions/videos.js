@@ -4,9 +4,6 @@
 // GET    -> renvoie { categories, videos } (public, pas de mot de passe requis)
 // POST   -> ajoute une vidéo (nécessite le bon mot de passe admin)
 // DELETE -> supprime une vidéo par id (nécessite le bon mot de passe admin)
-//
-// Stockage : on utilise Netlify Blobs (inclus gratuitement, pas de config
-// supplémentaire nécessaire, persiste entre les déploiements).
 
 const { getStore } = require("@netlify/blobs");
 
@@ -19,19 +16,14 @@ const DEFAULT_DATA = {
   videos: []
 };
 
-function getVideoStore(event, context) {
-  // En environnement Netlify Functions, il faut parfois passer les
-  // informations de connexion explicitement pour que Netlify Blobs
-  // fonctionne de manière fiable (sinon échec silencieux).
-  try {
-    return getStore(STORE_NAME);
-  } catch (e) {
-    return getStore({
-      name: STORE_NAME,
-      siteID: process.env.NETLIFY_SITE_ID || context?.site?.id,
-      token: process.env.NETLIFY_BLOBS_TOKEN
-    });
+function getVideoStore() {
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_AUTH_TOKEN;
+
+  if (siteID && token) {
+    return getStore({ name: STORE_NAME, siteID, token });
   }
+  return getStore(STORE_NAME);
 }
 
 function cors(body, statusCode = 200) {
@@ -54,7 +46,7 @@ exports.handler = async (event, context) => {
 
   let store;
   try {
-    store = getVideoStore(event, context);
+    store = getVideoStore();
   } catch (e) {
     return cors({ error: "Erreur de connexion au stockage: " + e.message }, 500);
   }
@@ -118,8 +110,6 @@ exports.handler = async (event, context) => {
     }
 
     if (payload.action === "checkPassword") {
-      // Le mot de passe a déjà été vérifié plus haut (ligne 55-57),
-      // donc on arrive ici seulement si le mot de passe est correct.
       return cors({ success: true });
     }
 
