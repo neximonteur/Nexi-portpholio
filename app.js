@@ -1,6 +1,5 @@
 /* ==========================================================
-   NEXI MONTEUR — PORTFOLIO
-   Version autonome (Netlify Functions + Netlify Blobs)
+   NEXI MONTEUR — PORTFOLIO (version compacte)
    ========================================================== */
 
 const API_URL = "/api/videos";
@@ -12,7 +11,11 @@ let state = {
 };
 
 let isAdminLoggedIn = false;
-let sessionPassword = null; // gardé en mémoire le temps de la session admin seulement
+let sessionPassword = null;
+
+function catClass(cat) {
+  return "b-" + cat.replace(/\s*\/\s*/g, "-").replace(/\s+/g, "-");
+}
 
 /* ---------------- Data loading ---------------- */
 async function loadData() {
@@ -55,7 +58,9 @@ async function apiCheckPassword(pwd) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "checkPassword", password: pwd })
   });
-  return res.ok;
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  return { ok: res.ok, error: data.error };
 }
 
 /* ---------------- YouTube thumbnail helper ---------------- */
@@ -80,20 +85,15 @@ function autoThumb(url) {
 }
 
 /* ---------------- Rendering ---------------- */
-function renderStats() {
-  document.getElementById("statCount").textContent = state.videos.length;
-  document.getElementById("statCats").textContent = state.categories.length;
-}
-
 function renderFilters() {
   const box = document.getElementById("filters");
   const all = ["Tous", ...state.categories];
   box.innerHTML = all.map(cat => `
-    <button class="filter-pill ${state.activeFilter === cat ? 'active' : ''}" data-cat="${escapeAttr(cat)}">${escapeHtml(cat)}</button>
+    <button class="filter-pill ${state.activeFilter === cat ? 'active' : ''}" data-c="${escapeAttr(cat)}">${escapeHtml(cat)}</button>
   `).join("");
   box.querySelectorAll(".filter-pill").forEach(btn => {
     btn.addEventListener("click", () => {
-      state.activeFilter = btn.dataset.cat;
+      state.activeFilter = btn.dataset.c;
       renderFilters();
       renderGrid();
     });
@@ -101,50 +101,41 @@ function renderFilters() {
 }
 
 function renderGrid() {
-  const grid = document.getElementById("projectsGrid");
+  const grid = document.getElementById("grid");
   const list = state.activeFilter === "Tous"
     ? state.videos
     : state.videos.filter(v => v.category === state.activeFilter);
 
   if (!list.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Aucune vidéo dans cette catégorie pour le moment.</div>`;
+    grid.innerHTML = `<div class="empty">Aucune vidéo dans cette catégorie pour le moment.</div>`;
     return;
   }
 
   grid.innerHTML = list.map(v => `
-    <div class="project-card" data-id="${v.id}">
-      <div class="thumb-wrap">
-        <span class="cat-tag">${escapeHtml(v.category)}</span>
+    <div class="card" data-id="${v.id}">
+      <div class="thumb">
+        <span class="badge ${catClass(v.category)}">${escapeHtml(v.category)}</span>
         <img src="${escapeAttr(v.thumb)}" alt="${escapeAttr(v.title)}" loading="lazy">
-        <div class="play-badge">
-          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-            <circle cx="26" cy="26" r="26" fill="white" fill-opacity="0.92"/>
-            <path d="M21 16.5L36 26L21 35.5V16.5Z" fill="#1A1D1F"/>
+        <div class="playdot">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="24" fill="white" fill-opacity="0.92"/>
+            <path d="M19 15L33 24L19 33V15Z" fill="#201A2B"/>
           </svg>
         </div>
       </div>
-      <div class="card-body">
+      <div class="info">
         <h3>${escapeHtml(v.title)}</h3>
         <p>${escapeHtml(v.desc || "")}</p>
       </div>
     </div>
   `).join("");
 
-  grid.querySelectorAll(".project-card").forEach(card => {
+  grid.querySelectorAll(".card").forEach(card => {
     card.addEventListener("click", () => {
       const video = state.videos.find(v => v.id === card.dataset.id);
       if (video) openVideoModal(video);
     });
   });
-}
-
-function renderMosaic() {
-  const box = document.getElementById("heroMosaic");
-  const pick = state.videos.slice(0, 3);
-  const classes = ["m1", "m2", "m3"];
-  box.innerHTML = pick.map((v, i) => `
-    <div class="mosaic-card ${classes[i]}"><img src="${escapeAttr(v.thumb)}" alt=""></div>
-  `).join("");
 }
 
 function renderCategorySelect() {
@@ -155,13 +146,13 @@ function renderCategorySelect() {
 function renderAdminList() {
   const box = document.getElementById("adminList");
   if (!state.videos.length) {
-    box.innerHTML = `<p style="color:var(--muted);font-size:0.88rem;">Aucune vidéo pour le moment.</p>`;
+    box.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;">Aucune vidéo pour le moment.</p>`;
     return;
   }
   box.innerHTML = state.videos.slice().reverse().map(v => `
     <div class="admin-list-item">
       <img src="${escapeAttr(v.thumb)}" alt="">
-      <div class="info">
+      <div class="i">
         <b>${escapeHtml(v.title)}</b>
         <span>${escapeHtml(v.category)}</span>
       </div>
@@ -175,7 +166,8 @@ function renderAdminList() {
         const data = await apiDeleteVideo(btn.dataset.id);
         state.videos = data.videos;
         state.categories = data.categories;
-        renderAll();
+        renderFilters();
+        renderGrid();
         renderAdminList();
         showToast("Vidéo supprimée");
       } catch (err) {
@@ -183,13 +175,6 @@ function renderAdminList() {
       }
     });
   });
-}
-
-function renderAll() {
-  renderStats();
-  renderFilters();
-  renderGrid();
-  renderMosaic();
 }
 
 /* ---------------- Utils ---------------- */
@@ -206,13 +191,17 @@ function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2400);
+  setTimeout(() => t.classList.remove("show"), 2600);
 }
 
 /* ---------------- Video modal (redirect) ---------------- */
 function openVideoModal(video) {
   document.getElementById("modalThumb").src = video.thumb;
   document.getElementById("modalTitle").textContent = video.title;
+  const catEl = document.getElementById("modalCat");
+  catEl.textContent = video.category;
+  catEl.className = "modal-cat " + catClass(video.category);
+  document.getElementById("modalDesc").textContent = video.desc || "";
   document.getElementById("modalGo").href = video.url;
   document.getElementById("videoModal").classList.add("open");
 }
@@ -220,20 +209,7 @@ function closeVideoModal() {
   document.getElementById("videoModal").classList.remove("open");
 }
 
-/* ---------------- Mobile menu ---------------- */
-function initMobileMenu() {
-  const burger = document.getElementById("burgerBtn");
-  const menu = document.getElementById("mobileMenu");
-  burger.addEventListener("click", () => {
-    menu.classList.toggle("open");
-  });
-  menu.querySelectorAll("a").forEach(a => {
-    a.addEventListener("click", () => menu.classList.remove("open"));
-  });
-}
-
 /* ---------------- Secret admin access ----------------
-   Déclencheurs :
    1) Cliquer 5 fois rapidement sur le logo
    2) Taper "admin" au clavier n'importe où sur la page
 --------------------------------------------------------- */
@@ -302,14 +278,14 @@ function initAdminUI() {
     btn.textContent = "Vérification...";
     btn.disabled = true;
     try {
-      const ok = await apiCheckPassword(val);
-      if (ok) {
+      const result = await apiCheckPassword(val);
+      if (result.ok) {
         sessionPassword = val;
         isAdminLoggedIn = true;
         showAdminMain();
       } else {
         const msg = document.getElementById("adminLoginMsg");
-        msg.textContent = "Mot de passe incorrect.";
+        msg.textContent = result.error || "Mot de passe incorrect.";
         msg.classList.add("show");
       }
     } catch (e) {
@@ -344,7 +320,8 @@ function initAdminUI() {
       const data = await apiAddVideo({ title, category, url, thumb, desc });
       state.videos = data.videos;
       state.categories = data.categories;
-      renderAll();
+      renderFilters();
+      renderGrid();
       renderCategorySelect();
       renderAdminList();
 
@@ -365,8 +342,8 @@ function initAdminUI() {
 /* ---------------- Init ---------------- */
 document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
-  renderAll();
-  initMobileMenu();
+  renderFilters();
+  renderGrid();
   initSecretAdmin();
   initAdminUI();
 
