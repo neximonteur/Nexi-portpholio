@@ -1,11 +1,4 @@
-// netlify/functions/videos.js
-//
-// API simple pour gérer les vidéos du portfolio.
-// GET    -> renvoie { categories, videos } (public, pas de mot de passe requis)
-// POST   -> ajoute une vidéo (nécessite le bon mot de passe admin)
-// DELETE -> supprime une vidéo par id (nécessite le bon mot de passe admin)
-
-const { getStore } = require("@netlify/blobs");
+const { getStore, connectLambda } = require("@netlify/blobs");
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Lupabe36";
 const STORE_NAME = "nexi-data";
@@ -15,16 +8,6 @@ const DEFAULT_DATA = {
   categories: ["Gaming", "Vlog", "Clip", "Short / TikTok", "Dev perso", "Business"],
   videos: []
 };
-
-function getVideoStore() {
-  const siteID = process.env.NETLIFY_SITE_ID;
-  const token = process.env.NETLIFY_AUTH_TOKEN;
-
-  if (siteID && token) {
-    return getStore({ name: STORE_NAME, siteID, token });
-  }
-  return getStore(STORE_NAME);
-}
 
 function cors(body, statusCode = 200) {
   return {
@@ -39,14 +22,15 @@ function cors(body, statusCode = 200) {
   };
 }
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return cors({});
   }
 
   let store;
   try {
-    store = getVideoStore();
+    connectLambda(event);
+    store = getStore(STORE_NAME);
   } catch (e) {
     return cors({ error: "Erreur de connexion au stockage: " + e.message }, 500);
   }
@@ -56,7 +40,7 @@ exports.handler = async (event, context) => {
       const data = (await store.get(KEY, { type: "json" })) || DEFAULT_DATA;
       return cors(data);
     } catch (e) {
-      return cors(DEFAULT_DATA);
+      return cors({ error: "Erreur de lecture: " + e.message }, 500);
     }
   }
 
@@ -72,11 +56,15 @@ exports.handler = async (event, context) => {
       return cors({ error: "Mot de passe incorrect." }, 401);
     }
 
+    if (payload.action === "checkPassword") {
+      return cors({ success: true });
+    }
+
     let data;
     try {
       data = (await store.get(KEY, { type: "json" })) || DEFAULT_DATA;
     } catch (e) {
-      data = DEFAULT_DATA;
+      return cors({ error: "Erreur de lecture: " + e.message }, 500);
     }
 
     if (payload.action === "addVideo") {
@@ -107,10 +95,6 @@ exports.handler = async (event, context) => {
         return cors({ error: "Erreur de sauvegarde: " + e.message }, 500);
       }
       return cors({ success: true, data });
-    }
-
-    if (payload.action === "checkPassword") {
-      return cors({ success: true });
     }
 
     return cors({ error: "Action inconnue." }, 400);
