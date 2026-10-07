@@ -6,7 +6,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let DATA = { categories: [], videos: [], channels: [], reviews: [], contacts: [] };
+let DATA = { categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] };
 let activeCat = "Tout";
 let pwd = sessionStorage.getItem("nexi_pwd") || "";
 
@@ -84,7 +84,7 @@ async function load() {
     const r = await fetch(API, { cache: "no-store" });
     const j = await r.json();
     if (!r.ok || j.error) throw new Error(j.error || r.status);
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [] }, j);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] }, j);
     $("#vErr").innerHTML = "";
   } catch (e) {
     $("#vErr").innerHTML = `<div class="error">Impossible de charger les données (${esc(e.message)}). Recharge la page dans un instant.</div>`;
@@ -172,8 +172,13 @@ function renderContacts() {
   }).join("");
 }
 
+function renderFaq() {
+  const box = $("#faq");
+  box.innerHTML = DATA.faq.map((q) => `<details><summary>${esc(q.question)}</summary><p>${esc(q.answer)}</p></details>`).join("");
+}
+
 function renderAll() {
-  renderViews(); renderChannels(); renderFilters(); renderVideos(); renderReviews(); renderContacts();
+  renderViews(); renderChannels(); renderFilters(); renderVideos(); renderReviews(); renderFaq(); renderContacts();
 }
 
 async function copyText(txt) {
@@ -223,7 +228,7 @@ function setupScroll() {
   upd();
 
 
-  const items = document.querySelectorAll(".toc li,.chap-h,.lead,.cols,.price,.pay,.grid-ch,.filters,.grid-r,footer .hint,footer .grid-c");
+  const items = document.querySelectorAll(".toc li,.chap-h,.lead,.cols,.price,.pay,.grid-ch,.filters,.grid-r,.faq,footer .hint,footer .grid-c");
   items.forEach((n) => n.classList.add("rv"));
   if ("IntersectionObserver" in window && !reduce) {
     const ro = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("seen"); ro.unobserve(e.target); } }), { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
@@ -326,6 +331,14 @@ const SPEC = {
       { k: "proof", l: "Preuve (capture d'écran du message)", t: "image", max: 1400 }
     ],
     title: (r) => r.author, sub: (r) => (r.text || "").slice(0, 60) + (r.proof ? " · avec preuve" : "")
+  },
+  faq: {
+    label: "FAQ", add: "Ajouter une question",
+    fields: [
+      { k: "question", l: "Question", t: "text", req: 1 },
+      { k: "answer", l: "Réponse", t: "area", req: 1 }
+    ],
+    title: (q) => q.question, sub: (q) => (q.answer || "").slice(0, 60)
   },
   contacts: {
     label: "Contacts", add: "Ajouter un contact",
@@ -465,7 +478,7 @@ async function save() {
       ? { action: "update", collection: A.tab, id: A.editId, item: A.vals }
       : { action: "add", collection: A.tab, item: A.vals };
     const r = await api(body);
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [] }, r.data);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] }, r.data);
     const was = A.editId ? "Modifié." : "Ajouté.";
     A.editId = null; A.vals = {};
     A.msg = was; A.err = false;
@@ -480,7 +493,7 @@ async function del() {
   if (!A.editId || !confirm("Supprimer définitivement ?")) return;
   try {
     const r = await api({ action: "delete", collection: A.tab, id: A.editId });
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [] }, r.data);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] }, r.data);
     A.editId = null; A.vals = {};
     A.msg = "Supprimé."; A.err = false;
     renderAll(); renderAdmin();
@@ -549,4 +562,3 @@ runTimeline();
 setupScroll();
 load();
 })();
-
