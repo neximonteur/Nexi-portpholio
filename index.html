@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr" class="js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexi, le monteur vidéo qu'il te faut</title>
+<meta name="description" content="Nexi, jeune monteur vidéo : YouTube, shorts, TikTok, pubs. Flexible sur toutes les niches, abordable et rapide.">
+<meta property="og:title" content="Nexi, le monteur vidéo qu'il te faut">
+<meta property="og:description" content="Montage YouTube, shorts, TikTok et pubs. Abordable, rapide, flexible.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0F1411">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1411; --surface:#171F19; --ink:#F2EEE3; --muted:#9BA79D; --line:#2A352D;
+  --accent:#D4F25A; --marker:#FF6B4A;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:70px;overflow-x:clip}
+body{background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--body);overflow-x:clip;-webkit-text-size-adjust:100%}
+img{max-width:100%;display:block}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{width:min(1100px,100% - 32px);margin-inline:auto}
+h1,h2,h3{font-family:var(--display);line-height:1.05;letter-spacing:-.02em}
+
+/* Barre du haut */
+.topbar{position:sticky;top:0;z-index:30;background:rgba(15,20,17,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.logo{font:800 1.5rem var(--display);letter-spacing:-.04em;padding:6px 4px;user-select:none;-webkit-user-select:none}
+.views-top{display:flex;align-items:baseline;gap:8px;font-size:.8rem;color:var(--muted);text-align:right}
+.views-top b{font:700 1.15rem var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.prog{position:absolute;left:0;bottom:-1px;height:3px;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0)}
+
+/* Accueil */
+.hero{padding:36px 0 8px}
+.hero h1{font-size:clamp(2.5rem,10.5vw,5.6rem);font-weight:800;line-height:.96;letter-spacing:-.045em;max-width:13ch;text-wrap:balance}
+.hero p.sub{margin-top:18px;max-width:38ch;font-size:1.08rem;color:var(--muted)}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:10px;font-weight:600;text-decoration:none;border:2px solid var(--ink);transition:transform .15s,background .15s,color .15s}
+.btn:active{transform:scale(.97)}
+.btn.main{background:var(--ink);color:var(--surface)}
+.btn.main:hover{background:var(--accent);border-color:var(--accent)}
+.btn.ghost:hover{background:var(--ink);color:var(--surface)}
+.btn.small{min-height:38px;padding:0 14px;font-size:.9rem}
+
+/* Timeline animée */
+.tl{margin-top:30px;background:var(--ink);border-radius:16px;padding:12px;color:#B9BDCC}
+.tl-in{position:relative;padding-top:20px}
+.ruler{position:absolute;left:0;right:0;top:0;height:14px;background:repeating-linear-gradient(90deg,#4B5062 0 1px,transparent 1px 28px) bottom/100% 7px no-repeat}
+.track{position:relative;height:30px;margin-top:6px;background:rgba(255,255,255,.05);border-radius:6px}
+.clip{position:absolute;top:3px;bottom:3px;left:var(--x);width:var(--w);background:var(--c);border-radius:5px;padding:0 7px;font:600 .66rem/24px var(--body);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.clip.dark{color:#13151B}
+.clip.on{transform:scaleX(1)}
+.head{position:absolute;top:0;bottom:-2px;left:0;width:2px;background:var(--marker);z-index:2;pointer-events:none}
+.head span{position:absolute;top:-4px;left:50%;transform:translateX(-50%);background:var(--marker);color:var(--ink);font:700 .7rem var(--body);padding:1px 6px;border-radius:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Sommaire */
+.toc{margin-top:44px}
+.toc h2{font-size:1.3rem;margin-bottom:6px}
+.toc ol{list-style:none;padding:0;border-top:2px solid var(--ink)}
+.toc a{display:grid;grid-template-columns:34px 1fr;gap:4px 10px;padding:14px 10px 14px 4px;border-bottom:1px solid var(--line);text-decoration:none;position:relative;transition:padding .2s,background .2s}
+.toc a::before{content:"";position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent);transition:width .2s}
+.toc a:hover,.toc a:focus-visible{padding-left:14px;background:var(--surface)}
+.toc a:hover::before,.toc a:focus-visible::before{width:4px}
+.toc .n{font:800 1.4rem var(--display);color:var(--accent);grid-row:span 2}
+.toc .t{font:700 1.1rem var(--display)}
+.toc .d{font-size:.9rem;color:var(--muted)}
+
+/* Chapitres */
+.chap{padding-top:64px}
+.chap-h{display:flex;align-items:flex-end;gap:14px;margin-bottom:22px}
+.chap-n{font:800 clamp(3.4rem,14vw,6rem)/.8 var(--display);color:var(--accent);letter-spacing:-.06em}
+.chap-h h2{font-size:clamp(1.7rem,6vw,2.6rem)}
+.lead{font:700 clamp(1.3rem,4.5vw,1.9rem)/1.2 var(--display);letter-spacing:-.02em;max-width:26ch;margin-bottom:26px}
+.cols{display:grid;gap:26px}
+.cols h3{font-size:1.15rem;margin-bottom:10px}
+.pills{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.pills li{padding:7px 14px;border-radius:99px;border:1.5px solid var(--ink);font-weight:500;font-size:.95rem}
+.cols p{max-width:52ch}
+.cols p+p{margin-top:10px}
+.price{margin-top:30px;display:grid;gap:10px 22px;align-items:center;background:var(--surface);border:2px solid var(--ink);border-radius:16px;padding:20px}
+.price .amount{font:800 clamp(3.4rem,15vw,5rem)/.9 var(--display);letter-spacing:-.05em;color:var(--accent)}
+.price .amount small{font-size:.3em;letter-spacing:0;color:var(--muted);font-weight:600;margin-left:4px}
+.price h3{font-size:1.15rem;margin-bottom:4px}
+.price p{max-width:48ch}
+.pay{margin-top:30px}
+.pay h3{font-size:1.15rem;margin-bottom:6px}
+.pay>p{max-width:52ch;margin-bottom:16px}
+.bars{display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:10px;font-size:.82rem;font-weight:600;color:var(--muted)}
+.bar{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.seg{position:relative;height:36px;border-radius:7px;overflow:hidden;font:600 .72rem/36px var(--body);text-align:center}
+.seg.vid{background:var(--accent);color:#fff}
+.seg.vid .wm{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(19,21,27,.82) 0 9px,rgba(19,21,27,.7) 9px 18px);color:#fff;letter-spacing:.02em}
+.seg.cash{border:2px dashed var(--line);color:var(--muted);background:transparent}
+.seg.cash .fill{position:absolute;inset:0;background:var(--marker);color:var(--ink);transform:scaleX(0);transform-origin:left;line-height:32px}
+.steps{list-style:none;padding:0;margin-top:18px;display:grid;gap:8px;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:8px;max-width:56ch;opacity:.5}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--surface);font:700 .8rem/26px var(--body);text-align:center}
+.pay.play .steps li{animation:lit .5s forwards}
+.pay.play .steps li:nth-child(1){animation-delay:.2s}
+.pay.play .steps li:nth-child(2){animation-delay:.9s}
+.pay.play .steps li:nth-child(3){animation-delay:1.6s}
+.pay.play .steps li:nth-child(4){animation-delay:3s}
+.pay.play .a .wm{animation:wmOut .6s 1.6s forwards}
+.pay.play .b .wm{animation:wmOut .6s 3s forwards}
+.pay.play .a .fill{animation:fillIn .6s 1.8s forwards}
+.pay.play .b .fill{animation:fillIn .6s 3.2s forwards}
+@keyframes lit{to{opacity:1}}
+@keyframes wmOut{to{opacity:0;transform:translateY(-100%)}}
+@keyframes fillIn{to{transform:scaleX(1)}}
+
+/* Chaînes */
+.grid-ch{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.chan{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;text-decoration:none;transition:border-color .15s,transform .15s}
+a.chan:hover{border-color:var(--ink);transform:translateY(-2px)}
+.avatar{flex:none;width:54px;height:54px;border-radius:50%;background:var(--ink);color:var(--surface);display:grid;place-items:center;font:800 1.3rem var(--display);overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.chan b{display:block;font:700 1rem var(--display);line-height:1.2;overflow-wrap:anywhere}
+.chan span{font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}
+.plat{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:99px;font-size:.72rem!important;font-weight:600;background:var(--bg);color:var(--ink)!important}
+
+/* Vidéos */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.chip{padding:8px 14px;border-radius:99px;border:1.5px solid var(--ink);font-size:.92rem;font-weight:500;transition:background .15s,color .15s}
+.chip:hover{background:var(--surface)}
+.chip.on{background:var(--ink);color:var(--surface)}
+.grid-v{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{display:block;width:100%;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .15s}
+.card:hover{border-color:var(--ink)}
+.card.in{animation:cardIn .4s both}
+@keyframes cardIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.thumb{position:relative;aspect-ratio:16/9;background:var(--ink);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;transition:transform .35s}
+.card:hover .thumb img{transform:scale(1.04)}
+.ph{width:100%;height:100%;display:grid;place-items:center;color:#fff;font:700 1.1rem var(--display);background:var(--c,var(--ink))}
+.play{position:absolute;right:10px;bottom:10px;width:38px;height:38px;border-radius:50%;background:var(--marker);display:grid;place-items:center;opacity:0;transform:scale(.7);transition:opacity .2s,transform .2s}
+.card:hover .play,.card:focus-visible .play{opacity:1;transform:none}
+.play::before{content:"";margin-left:3px;border-left:11px solid var(--ink);border-block:7px solid transparent}
+.vbody{padding:12px 14px 14px}
+.vbody h3{font:700 1.02rem/1.25 var(--display);letter-spacing:-.01em;margin:8px 0 6px}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;color:var(--muted)}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.76rem;font-weight:600}
+.empty{padding:26px;border:2px dashed var(--line);border-radius:14px;color:var(--muted)}
+.error{padding:14px 16px;margin-bottom:16px;border-radius:12px;background:#FBE4E1;color:#7A1F17;font-weight:500}
+
+/* Avis */
+.grid-r{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.rev{display:flex;flex-direction:column;background:var(--surface);border-radius:14px;padding:18px;border-left:5px solid var(--accent)}
+.rev q{quotes:none;font:500 1.05rem/1.45 var(--body);flex:1}
+.rev .who{margin-top:14px;font-weight:600}
+.rev .who span{display:block;font-weight:400;font-size:.88rem;color:var(--muted)}
+.rev .btn{margin-top:14px;align-self:flex-start}
+
+/* Contact */
+footer{margin-top:90px;background:var(--ink);color:#E4E6EE;padding:56px 0 34px}
+footer h2{font-size:clamp(1.8rem,6vw,2.8rem);color:#fff;margin-bottom:6px}
+footer .chap-n{color:var(--marker)}
+footer .chap-h{margin-bottom:12px}
+footer p.hint{color:#A3A8BA;margin-bottom:22px;max-width:46ch}
+.grid-c{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.ct{display:flex;align-items:stretch;background:#1E212B;border-radius:14px;overflow:hidden}
+.ct-main{flex:1;display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;min-width:0;border-radius:14px 0 0 14px}
+.ct-main:hover{background:#262A36}
+.ico{flex:none;width:44px;height:44px;border-radius:11px;background:#2E3240;display:grid;place-items:center;font:800 1.2rem var(--display);color:#fff;overflow:hidden}
+.ico img{width:100%;height:100%;object-fit:contain}
+.ct b{display:block;font:700 1.02rem var(--display)}
+.ct span{display:block;font-size:.88rem;color:#A3A8BA;overflow-wrap:anywhere}
+.ct-copy{padding:0 16px;font-size:.84rem;font-weight:600;color:var(--marker);border-left:1px solid #2E3240}
+.ct-copy:hover{background:#262A36}
+.copy{margin-top:46px;font-size:.84rem;color:#7C8195}
+
+/* Fenêtres (vidéo, preuve, toast) */
+.modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(19,21,27,.78)}
+.modal.open{display:flex;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.sheet{position:relative;width:min(560px,100%);max-height:92vh;overflow:auto;background:var(--surface);border-radius:20px;animation:rise .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes rise{from{transform:translateY(24px);opacity:0}}
+.sheet .x{position:absolute;top:10px;right:10px;z-index:2;width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;font-size:1.3rem;line-height:1}
+.sheet .vbody{padding:18px 20px 22px}
+.sheet h3{font-size:1.4rem;margin:10px 0 8px}
+.sheet p{color:var(--muted);margin-bottom:16px;white-space:pre-line}
+.proof{width:min(640px,100%);max-height:92vh;overflow:auto;border-radius:14px;background:var(--surface);position:relative}
+.proof img{width:100%}
+.toast{position:fixed;left:50%;bottom:22px;z-index:90;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Panneau admin */
+.admin{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;display:none}
+.admin.open{display:block}
+.admin-bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--ink);color:#fff}
+.admin-bar b{font:700 1.1rem var(--display)}
+.admin-bar button{padding:8px 14px;border-radius:8px;background:#2E3240;font-weight:600}
+.admin-in{width:min(680px,100%);margin:0 auto;padding:16px 16px 60px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tabs button{padding:9px 14px;border-radius:99px;border:1.5px solid var(--ink);font-weight:600;font-size:.92rem}
+.tabs button.on{background:var(--ink);color:#fff}
+.alist{display:grid;gap:8px;margin-bottom:22px}
+.arow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px}
+.arow:hover,.arow.sel{border-color:var(--accent)}
+.arow .t{flex:1;min-width:0}
+.arow b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arow small{color:var(--muted)}
+.form{background:var(--surface);border:2px solid var(--ink);border-radius:16px;padding:16px;display:grid;gap:14px}
+.form h3{font-size:1.15rem}
+.fld label{display:block;font-weight:600;font-size:.9rem;margin-bottom:5px}
+.fld input,.fld textarea,.fld select{width:100%;padding:11px 12px;font:inherit;font-size:16px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.fld textarea{min-height:100px;resize:vertical}
+.fld input:focus,.fld textarea:focus,.fld select:focus{outline:none;border-color:var(--accent)}
+.imgf{display:grid;gap:8px}
+.imgf .pre{width:100%;max-height:180px;object-fit:contain;border-radius:10px;background:var(--bg)}
+.imgf .row{display:flex;flex-wrap:wrap;gap:8px}
+.imgf .row label{margin:0;display:inline-flex}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.btn.danger{border-color:#B3261E;color:#B3261E}
+.btn.danger:hover{background:#B3261E;color:#fff}
+.status{min-height:1.4em;font-weight:500}
+.status.err{color:#B3261E}
+.status.ok{color:#1E7A4B}
+.login{width:min(380px,100%);margin:20vh auto 0;display:grid;gap:12px}
+
+
+/* Thème sombre : ajustements */
+.tl{background:#1B261F;border:1px solid var(--line)}
+.ruler{background:repeating-linear-gradient(90deg,#4A5A4F 0 1px,transparent 1px 28px) bottom/100% 7px no-repeat}
+.head span{color:#13151B}
+.thumb{background:#000}
+footer{background:#0A0F0C;border-top:1px solid var(--line)}
+.price{border:1.5px solid var(--line)}
+.price .amount{text-shadow:0 0 40px rgba(212,242,90,.25)}
+.price .amount small{text-shadow:none}
+.seg.vid{color:#13151B}
+.seg.cash .fill{color:#13151B}
+.chip{border-color:var(--line)}
+.chip:hover{border-color:var(--ink);background:var(--surface)}
+.pills li{border-color:#3A4A3E}
+.card:hover,a.chan:hover{border-color:var(--accent)}
+.card:hover{box-shadow:0 10px 30px -12px rgba(212,242,90,.25)}
+.play{background:var(--accent)}
+.btn{border-color:var(--ink)}
+.btn.main:hover{color:#13151B}
+.btn.ghost:hover{color:#13151B}
+.sheet .x{background:var(--ink);color:#13151B}
+.sheet{border:1px solid var(--line)}
+.toast{background:var(--ink);color:#13151B}
+.admin-bar{background:#0A0F0C;border-bottom:1px solid var(--line)}
+.admin-bar button{background:#1E2A21}
+.tabs button{border-color:var(--line)}
+.tabs button.on{background:var(--ink);color:#13151B}
+.form{border:1.5px solid var(--line)}
+.fld input,.fld textarea,.fld select{background:var(--bg);color:var(--ink)}
+.btn.danger{border-color:#FF7A6B;color:#FF7A6B}
+.btn.danger:hover{background:#FF7A6B;color:#13151B}
+.status.err{color:#FF7A6B}
+.status.ok{color:var(--accent)}
+.error{background:#3A1713;color:#FFB4A8}
+.rev{border:1px solid var(--line);border-left:5px solid var(--accent)}
+.ct{background:#151D17;border:1px solid var(--line)}
+.ct-main:hover,.ct-copy:hover{background:#1E2A21}
+.ico{background:#223027}
+.ct-copy{border-left-color:var(--line)}
+
+/* Animations utiles : découverte progressive du contenu */
+.hero h1,.hero p.sub,.hero .cta,.hero .tl{animation:up .7s cubic-bezier(.2,.8,.2,1) both}
+.hero p.sub{animation-delay:.12s}
+.hero .cta{animation-delay:.22s}
+.hero .tl{animation-delay:.32s}
+@keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.js .rv{opacity:0;transform:translateY(26px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
+.js .rv.seen{opacity:1;transform:none}
+.chip,.btn,.ct-main,.arow{-webkit-tap-highlight-color:transparent}
+
+@media(min-width:720px){
+  .hero{padding-top:64px}
+  .cols{grid-template-columns:1fr 1fr;gap:44px}
+  .price{grid-template-columns:auto 1fr}
+  .toc a{grid-template-columns:46px 1fr}
+  .bar-row{grid-template-columns:90px 1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="logo" id="logo">Nexi</div>
+    <div class="views-top" aria-live="polite"><span>vues générées</span><b id="totalViews">0</b></div>
+  </div>
+  <div class="prog" id="prog"></div>
+</header>
+
+<main>
+  <section class="hero wrap" id="top">
+    <h1>Nexi, le monteur vidéo qu'il te faut.</h1>
+    <p class="sub">Jeune monteur : YouTube, shorts, TikTok et pubs. Rapide, flexible et abordable.</p>
+    <div class="cta">
+      <a class="btn main" href="#montages">Voir mes montages</a>
+      <a class="btn ghost" href="#contact">Me contacter</a>
+    </div>
+
+    <div class="tl" id="tl" aria-hidden="true">
+      <div class="tl-in">
+        <div class="ruler"></div>
+        <div class="track">
+          <span class="clip" style="--x:0%;--w:14%;--c:#FF6B4A">hook</span>
+          <span class="clip" style="--x:15%;--w:38%;--c:#5B8CFF">intro dynamique</span>
+          <span class="clip dark" style="--x:54%;--w:20%;--c:#D4F25A">b-roll</span>
+          <span class="clip dark" style="--x:75%;--w:25%;--c:#3FBF8A">rythme</span>
+        </div>
+        <div class="track">
+          <span class="clip dark" style="--x:6%;--w:22%;--c:#F4C430">sous-titres</span>
+          <span class="clip" style="--x:30%;--w:16%;--c:#2F6B4F">effets</span>
+          <span class="clip" style="--x:48%;--w:30%;--c:#6F6B66">transitions</span>
+          <span class="clip dark" style="--x:80%;--w:20%;--c:#F2EEE3">outro</span>
+        </div>
+        <div class="track">
+          <span class="clip" style="--x:0%;--w:100%;--c:#4B3FA8">musique et mixage</span>
+        </div>
+        <div class="head" id="head"><span id="tc">0:00</span></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="toc wrap" aria-label="Sommaire">
+    <h2>Sommaire</h2>
+    <ol>
+      <li><a href="#presentation"><span class="n">1</span><span class="t">Qui je suis</span><span class="d">Mes formats, mon prix et le paiement</span></a></li>
+      <li><a href="#chaines"><span class="n">2</span><span class="t">Ils me font confiance</span><span class="d">Les chaînes et comptes pour qui je monte</span></a></li>
+      <li><a href="#montages"><span class="n">3</span><span class="t">Mes montages</span><span class="d">Les vidéos que j'ai déjà réalisées</span></a></li>
+      <li><a href="#avis"><span class="n">4</span><span class="t">Avis clients</span><span class="d">Ce qu'ils en disent, avec les preuves</span></a></li>
+      <li><a href="#contact"><span class="n">5</span><span class="t">Me contacter</span><span class="d">Gmail, Discord et le reste</span></a></li>
+    </ol>
+  </nav>
+
+  <section class="chap wrap" id="presentation">
+    <div class="chap-h"><span class="chap-n">1</span><h2>Qui je suis</h2></div>
+    <p class="lead">Salut ! Moi c'est Nexi, jeune monteur vidéo qui débute.</p>
+    <div class="cols">
+      <div>
+        <h3>Formats</h3>
+        <ul class="pills">
+          <li>Vidéos YouTube</li><li>Shorts</li><li>TikTok</li><li>Pubs et marketing</li><li>Et d'autres formats</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Pourquoi moi ?</h3>
+        <p>Je suis très flexible sur toutes les niches, pas cher, et je rends mes montages rapidement.</p>
+        <p>Je fais tous les ajustements nécessaires avant le rendu final.</p>
+      </div>
+    </div>
+
+    <div class="price">
+      <div class="amount">50 €<small>négociables</small></div>
+      <div>
+        <h3>Prix</h3>
+        <p>Crois-moi, je suis très abordable : pour une vidéo de 10 minutes avec une intro et un hook dynamiques, un montage efficace du début à la fin et quelques effets, on est sur 50 €, négociables.</p>
+      </div>
+    </div>
+
+    <div class="pay" id="pay">
+      <h3>Paiement</h3>
+      <p>Le paiement se fait sur PayPal, une fois la vidéo montée, en deux moitiés.</p>
+      <div class="bars" aria-hidden="true">
+        <div class="bar-row"><span>Vidéo</span>
+          <div class="bar">
+            <div class="seg vid a">1re moitié<div class="wm">filigrane</div></div>
+            <div class="seg vid b">2e moitié<div class="wm">filigrane</div></div>
+          </div>
+        </div>
+        <div class="bar-row"><span>Paiement</span>
+          <div class="bar">
+            <div class="seg cash a">1re moitié<div class="fill">payée</div></div>
+            <div class="seg cash b">2e moitié<div class="fill">payée</div></div>
+          </div>
+        </div>
+      </div>
+      <ol class="steps">
+        <li>Je t'envoie la vidéo entière avec un filigrane.</li>
+        <li>On fait les ajustements ensemble.</li>
+        <li>Je t'envoie la première moitié sans filigrane, tu m'envoies la moitié de l'argent.</li>
+        <li>Je t'envoie la seconde moitié, tu m'envoies le reste.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="chap wrap" id="chaines">
+    <div class="chap-h"><span class="chap-n">2</span><h2>Ils me font confiance</h2></div>
+    <div class="grid-ch" id="channels"></div>
+  </section>
+
+  <section class="chap wrap" id="montages">
+    <div class="chap-h"><span class="chap-n">3</span><h2>Mes montages</h2></div>
+    <div id="vErr"></div>
+    <div class="filters" id="filters"></div>
+    <div class="grid-v" id="videos"></div>
+  </section>
+
+  <section class="chap wrap" id="avis">
+    <div class="chap-h"><span class="chap-n">4</span><h2>Avis clients</h2></div>
+    <div class="grid-r" id="reviews"></div>
+  </section>
+</main>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="chap-h"><span class="chap-n">5</span><h2>Me contacter</h2></div>
+    <p class="hint">Touche un contact pour m'écrire, ou « Copier » pour récupérer mon pseudo.</p>
+    <div class="grid-c" id="contacts"></div>
+    <p class="copy">© Nexi, monteur vidéo</p>
+  </div>
+</footer>
+
+<div class="modal" id="vModal" role="dialog" aria-modal="true" aria-label="Détail de la vidéo"><div class="sheet" id="vSheet"></div></div>
+<div class="modal" id="pModal" role="dialog" aria-modal="true" aria-label="Preuve"><div class="proof" id="pSheet"></div></div>
+<div class="admin" id="admin"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
