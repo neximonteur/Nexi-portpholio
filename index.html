@@ -276,6 +276,16 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
 .js .rv.seen{opacity:1;transform:none}
 .chip,.btn,.ct-main,.arow{-webkit-tap-highlight-color:transparent}
 
+/* FAQ */
+.faq{display:grid;gap:10px;max-width:720px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:12px;transition:border-color .2s}
+.faq details[open]{border-color:var(--accent)}
+.faq summary{list-style:none;cursor:pointer;padding:16px 48px 16px 16px;font:700 1.02rem var(--display);position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:1.5rem;color:var(--accent);transition:transform .25s}
+.faq details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
+.faq details p{padding:0 16px 16px;color:var(--muted);line-height:1.55;animation:up .35s ease both}
+
 @media(min-width:720px){
   .hero{padding-top:64px}
   .cols{grid-template-columns:1fr 1fr;gap:44px}
@@ -337,7 +347,8 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
       <li><a href="#chaines"><span class="n">2</span><span class="t">Ils me font confiance</span><span class="d">Les chaînes et comptes pour qui je monte</span></a></li>
       <li><a href="#montages"><span class="n">3</span><span class="t">Mes montages</span><span class="d">Les vidéos que j'ai déjà réalisées</span></a></li>
       <li><a href="#avis"><span class="n">4</span><span class="t">Avis clients</span><span class="d">Ce qu'ils en disent, avec les preuves</span></a></li>
-      <li><a href="#contact"><span class="n">5</span><span class="t">Me contacter</span><span class="d">Gmail, Discord et le reste</span></a></li>
+      <li><a href="#faq-s"><span class="n">5</span><span class="t">Questions fréquentes</span><span class="d">Prix, paiement, retouches</span></a></li>
+      <li><a href="#contact"><span class="n">6</span><span class="t">Me contacter</span><span class="d">Gmail, Discord et le reste</span></a></li>
     </ol>
   </nav>
 
@@ -408,11 +419,16 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
     <div class="chap-h"><span class="chap-n">4</span><h2>Avis clients</h2></div>
     <div class="grid-r" id="reviews"></div>
   </section>
+
+  <section class="chap wrap" id="faq-s">
+    <div class="chap-h"><span class="chap-n">5</span><h2>Questions fréquentes</h2></div>
+    <div class="faq" id="faq"></div>
+  </section>
 </main>
 
 <footer id="contact">
   <div class="wrap">
-    <div class="chap-h"><span class="chap-n">5</span><h2>Me contacter</h2></div>
+    <div class="chap-h"><span class="chap-n">6</span><h2>Me contacter</h2></div>
     <p class="hint">Touche un contact pour m'écrire, ou « Copier » pour récupérer mon pseudo.</p>
     <div class="grid-c" id="contacts"></div>
     <p class="copy">© Nexi, monteur vidéo</p>
