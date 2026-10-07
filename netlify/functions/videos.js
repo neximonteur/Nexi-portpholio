@@ -25,6 +25,8 @@ const DEFAULT_FAQ = [
   { id: "q-formats", question: "Quels types de vidéos tu montes ?", answer: "Des vidéos YouTube, des shorts, des TikTok, et d'autres formats comme des pubs ou du marketing. Je suis flexible sur toutes les niches." }
 ];
 
+const STATES = ["actif", "bientot", "inactif", "autre"];
+
 const COLLECTIONS = {
   videos: { prefix: "v", fields: ["title", "url", "category", "description", "thumb", "views"], required: ["title", "url", "category"], images: ["thumb"], links: ["url"], linkRequired: true },
   channels: { prefix: "ch", fields: ["name", "platform", "handle", "url", "image"], required: ["name"], images: ["image"], links: ["url"] },
@@ -54,6 +56,7 @@ function normalize(d) {
     videos: Array.isArray(d.videos) ? d.videos : [],
     channels: Array.isArray(d.channels) ? d.channels : [],
     reviews: Array.isArray(d.reviews) ? d.reviews : [],
+    status: d.status && STATES.includes(d.status.state) ? { state: d.status.state, text: String(d.status.text || "").slice(0, 40) } : { state: "actif", text: "" },
     faq: Array.isArray(d.faq) ? d.faq : DEFAULT_FAQ.map((q) => ({ ...q })),
     contacts: Array.isArray(d.contacts) ? d.contacts : DEFAULT_CONTACTS.map((c) => ({ ...c }))
   };
@@ -164,6 +167,20 @@ exports.handler = async (event) => {
     // Anciens noms d'actions (au cas où une vieille version du site est en cache)
     if (payload.action === "addVideo") { payload = { ...payload, action: "add", collection: "videos", item: payload.video }; }
     if (payload.action === "deleteVideo") { payload = { ...payload, action: "delete", collection: "videos" }; }
+
+    if (payload.action === "setStatus") {
+      const state = STATES.includes(payload.state) ? payload.state : "actif";
+      const text = String(payload.text || "").trim().slice(0, 40);
+      if (state === "autre" && !text) return cors({ error: "Écris ton message pour le statut « Autre »." }, 400);
+      try {
+        const data = normalize(await store.get(KEY, { type: "json" }));
+        data.status = { state, text };
+        await store.setJSON(KEY, data);
+        return cors({ success: true, data });
+      } catch (e) {
+        return cors({ error: "Erreur de sauvegarde: " + e.message }, 500);
+      }
+    }
 
     const spec = COLLECTIONS[payload.collection];
     if (!spec || !["add", "update", "delete"].includes(payload.action)) return cors({ error: "Action inconnue." }, 400);
