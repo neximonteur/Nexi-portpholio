@@ -233,10 +233,10 @@ function setupScroll() {
   const pay = $("#pay");
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver((es) => {
-      if (es[0].isIntersecting) { pay.classList.add("play"); io.disconnect(); }
+      if (es[0].isIntersecting) { pay.classList.add("go"); io.disconnect(); }
     }, { threshold: 0.35 });
     io.observe(pay);
-  } else pay.classList.add("play");
+  } else pay.classList.add("go");
 }
 
 /* ---------- Fenêtres ---------- */
@@ -549,3 +549,4 @@ runTimeline();
 setupScroll();
 load();
 })();
+
