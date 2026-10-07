@@ -6,7 +6,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let DATA = { categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] };
+let DATA = { categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } };
 let activeCat = "Tout";
 let pwd = sessionStorage.getItem("nexi_pwd") || "";
 
@@ -84,7 +84,7 @@ async function load() {
     const r = await fetch(API, { cache: "no-store" });
     const j = await r.json();
     if (!r.ok || j.error) throw new Error(j.error || r.status);
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] }, j);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } }, j);
     $("#vErr").innerHTML = "";
   } catch (e) {
     $("#vErr").innerHTML = `<div class="error">Impossible de charger les données (${esc(e.message)}). Recharge la page dans un instant.</div>`;
@@ -177,7 +177,18 @@ function renderFaq() {
   box.innerHTML = DATA.faq.map((q) => `<details><summary>${esc(q.question)}</summary><p>${esc(q.answer)}</p></details>`).join("");
 }
 
+const STATUS_LABELS = { actif: "Actif", bientot: "Bientôt là", inactif: "Pas actif" };
+function renderStatus() {
+  const p = $("#statusPill"), st = DATA.status || { state: "actif", text: "" };
+  const label = st.state === "autre" ? st.text : STATUS_LABELS[st.state];
+  if (!label) { p.hidden = true; return; }
+  p.className = "status-pill " + st.state;
+  p.querySelector("span").textContent = label;
+  p.hidden = false;
+}
+
 function renderAll() {
+  renderStatus();
   renderViews(); renderChannels(); renderFilters(); renderVideos(); renderReviews(); renderFaq(); renderContacts();
 }
 
@@ -399,6 +410,11 @@ function renderAdmin() {
   adminEl.innerHTML = `
     <div class="admin-bar"><b>Espace admin</b><span><button data-alock>Verrouiller</button> <button data-aclose>Fermer</button></span></div>
     <div class="admin-in">
+      <div class="sbox">
+        <h3>Mon statut</h3>
+        <div class="row">${[["actif", "Actif"], ["bientot", "Bientôt là"], ["inactif", "Pas actif"], ["autre", "Autre"]].map(([k, l]) => `<button data-state="${k}" class="${(DATA.status || {}).state === k ? "on" : ""}">${l}</button>`).join("")}</div>
+        ${(DATA.status || {}).state === "autre" ? `<input id="stText" type="text" maxlength="40" placeholder="Ton message (ex. En vacances jusqu'au 15)" value="${esc((DATA.status || {}).text || "")}"><button class="btn small main" style="margin-top:10px" data-stsave>Enregistrer le message</button>` : ""}
+      </div>
       <div class="tabs">${Object.keys(SPEC).map((k) => `<button class="${k === A.tab ? "on" : ""}" data-tab="${k}">${SPEC[k].label} (${DATA[k].length})</button>`).join("")}</div>
       <div class="alist">${items.length ? items.map((it) => `<button class="arow${it.id === A.editId ? " sel" : ""}" data-edit="${esc(it.id)}"><span class="t"><b>${esc(spec.title(it))}</b><small>${esc(spec.sub(it))}</small></span><span>Modifier</span></button>`).join("") : '<p class="empty">Rien pour l\'instant.</p>'}</div>
       <div class="form" id="aform">
@@ -468,6 +484,19 @@ function lock(msg) {
   renderAdmin();
 }
 
+async function setStatus(state, text) {
+  if (state === "autre" && text === undefined) {
+    DATA.status = { state: "autre", text: (DATA.status && DATA.status.text) || "" };
+    return renderAdmin();
+  }
+  try {
+    const r = await api({ action: "setStatus", state, text: text || "" });
+    DATA = Object.assign(DATA, r.data);
+    renderAll(); renderAdmin();
+    toast("Statut mis à jour.");
+  } catch (e) { toast(e.message); }
+}
+
 async function save() {
   const spec = SPEC[A.tab];
   const miss = spec.fields.find((f) => f.req && !String(A.vals[f.k] ?? "").trim());
@@ -478,7 +507,7 @@ async function save() {
       ? { action: "update", collection: A.tab, id: A.editId, item: A.vals }
       : { action: "add", collection: A.tab, item: A.vals };
     const r = await api(body);
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] }, r.data);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } }, r.data);
     const was = A.editId ? "Modifié." : "Ajouté.";
     A.editId = null; A.vals = {};
     A.msg = was; A.err = false;
@@ -493,7 +522,7 @@ async function del() {
   if (!A.editId || !confirm("Supprimer définitivement ?")) return;
   try {
     const r = await api({ action: "delete", collection: A.tab, id: A.editId });
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [] }, r.data);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } }, r.data);
     A.editId = null; A.vals = {};
     A.msg = "Supprimé."; A.err = false;
     renderAll(); renderAdmin();
@@ -529,6 +558,9 @@ adminEl.addEventListener("click", (e) => {
     return;
   }
   if (t.closest("[data-new]")) { A.editId = null; A.vals = {}; A.msg = ""; return renderAdmin(); }
+  const stb = t.closest("[data-state]");
+  if (stb) return setStatus(stb.dataset.state);
+  if (t.closest("[data-stsave]")) return setStatus("autre", ($("#stText", adminEl) || {}).value || "");
   if (t.closest("[data-save]")) return save();
   if (t.closest("[data-del]")) return del();
   const cl = t.closest("[data-clear]");
