@@ -103,15 +103,15 @@ h1,h2,h3{font-family:var(--display);line-height:1.05;letter-spacing:-.02em}
 .steps{list-style:none;padding:0;margin-top:18px;display:grid;gap:8px;counter-reset:s}
 .steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:8px;max-width:56ch;opacity:.5}
 .steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--surface);font:700 .8rem/26px var(--body);text-align:center}
-.pay.play .steps li{animation:lit .5s forwards}
-.pay.play .steps li:nth-child(1){animation-delay:.2s}
-.pay.play .steps li:nth-child(2){animation-delay:.9s}
-.pay.play .steps li:nth-child(3){animation-delay:1.6s}
-.pay.play .steps li:nth-child(4){animation-delay:3s}
-.pay.play .a .wm{animation:wmOut .6s 1.6s forwards}
-.pay.play .b .wm{animation:wmOut .6s 3s forwards}
-.pay.play .a .fill{animation:fillIn .6s 1.8s forwards}
-.pay.play .b .fill{animation:fillIn .6s 3.2s forwards}
+.pay.go .steps li{animation:lit .5s forwards}
+.pay.go .steps li:nth-child(1){animation-delay:.2s}
+.pay.go .steps li:nth-child(2){animation-delay:.9s}
+.pay.go .steps li:nth-child(3){animation-delay:1.6s}
+.pay.go .steps li:nth-child(4){animation-delay:3s}
+.pay.go .a .wm{animation:wmOut .6s 1.6s forwards}
+.pay.go .b .wm{animation:wmOut .6s 3s forwards}
+.pay.go .a .fill{animation:fillIn .6s 1.8s forwards}
+.pay.go .b .fill{animation:fillIn .6s 3.2s forwards}
 @keyframes lit{to{opacity:1}}
 @keyframes wmOut{to{opacity:0;transform:translateY(-100%)}}
 @keyframes fillIn{to{transform:scaleX(1)}}
