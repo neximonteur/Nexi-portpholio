@@ -286,6 +286,23 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
 .faq details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
 .faq details p{padding:0 16px 16px;color:var(--muted);line-height:1.55;animation:up .35s ease both}
 
+/* Statut */
+.status-pill{display:inline-flex;align-items:center;gap:9px;padding:7px 14px 7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font:600 .9rem var(--body);margin-bottom:18px;animation:up .6s ease both}
+.status-pill[hidden]{display:none}
+.status-pill i{width:10px;height:10px;border-radius:50%;background:var(--sc,#F2EEE3);flex:none}
+.status-pill.actif{--sc:#D4F25A}
+.status-pill.actif i{animation:pulse 2s ease-out infinite}
+.status-pill.bientot{--sc:#FFB547}
+.status-pill.inactif{--sc:#FF6B4A}
+.status-pill.autre{--sc:#F2EEE3}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,242,90,.55)}100%{box-shadow:0 0 0 9px rgba(212,242,90,0)}}
+.sbox{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:18px}
+.sbox h3{font-size:1.05rem;margin-bottom:10px}
+.sbox .row{display:flex;flex-wrap:wrap;gap:8px}
+.sbox .row button{padding:9px 14px;border-radius:99px;border:1.5px solid var(--line);font-weight:600;font-size:.92rem}
+.sbox .row button.on{background:var(--ink);color:#13151B;border-color:var(--ink)}
+.sbox input{margin-top:10px;width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+
 @media(min-width:720px){
   .hero{padding-top:64px}
   .cols{grid-template-columns:1fr 1fr;gap:44px}
@@ -310,6 +327,7 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
 
 <main>
   <section class="hero wrap" id="top">
+    <div class="status-pill" id="statusPill" hidden><i></i><span></span></div>
     <h1>Nexi, le monteur vidéo qu'il te faut.</h1>
     <p class="sub">Jeune monteur : YouTube, shorts, TikTok et pubs. Rapide, flexible et abordable.</p>
     <div class="cta">
