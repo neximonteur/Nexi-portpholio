@@ -112,7 +112,7 @@ function renderViews() {
 
 function renderChannels() {
   const box = $("#channels");
-  if (!DATA.channels.length) { box.innerHTML = '<p class="empty">Les chaînes arrivent bientôt.</p>'; return; }
+  if (!DATA.channels.length) { box.innerHTML = '<p class="empty">' + tr("e_ch") + '</p>'; return; }
   box.innerHTML = DATA.channels.map((c) => {
     const ini = esc((c.name || "?").trim().charAt(0).toUpperCase());
     const av = c.image ? `<img src="${esc(imgSrc(c.image))}" alt="" loading="lazy" data-i="${ini}" onerror="this.replaceWith(this.dataset.i)">` : ini;
@@ -124,7 +124,7 @@ function renderChannels() {
 function renderFilters() {
   const cats = ["Tout", ...DATA.categories.filter((c) => DATA.videos.some((v) => v.category === c))];
   if (!cats.includes(activeCat)) activeCat = "Tout";
-  $("#filters").innerHTML = cats.map((c) => `<button class="chip${c === activeCat ? " on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  $("#filters").innerHTML = cats.map((c) => `<button class="chip${c === activeCat ? " on" : ""}" data-cat="${esc(c)}">${c === "Tout" ? tr("all") : esc(c)}</button>`).join("");
 }
 
 function renderVideos() {
@@ -135,7 +135,7 @@ function renderVideos() {
     <button class="card in" data-id="${esc(v.id)}" style="animation-delay:${Math.min(i, 12) * 40}ms">
       <div class="thumb">${thumbHtml(v)}<span class="play"></span></div>
       <div class="vbody">
-        <div class="meta">${tag(v.category)}${Number(v.views) ? `<span>${fmtViews(v.views)} vues</span>` : ""}</div>
+        <div class="meta">${tag(v.category)}${Number(v.views) ? `<span>${fmtViews(v.views)} ${tr("v_views")}</span>` : ""}</div>
         <h3>${esc(v.title)}</h3>
       </div>
     </button>`).join("");
@@ -143,12 +143,12 @@ function renderVideos() {
 
 function renderReviews() {
   const box = $("#reviews");
-  if (!DATA.reviews.length) { box.innerHTML = '<p class="empty">Les premiers avis arrivent bientôt.</p>'; return; }
+  if (!DATA.reviews.length) { box.innerHTML = '<p class="empty">' + tr("e_rev") + '</p>'; return; }
   box.innerHTML = DATA.reviews.slice().reverse().map((r) => `
     <article class="rev">
       <q>${esc(r.text)}</q>
       <div class="who">${esc(r.author)}${r.role ? `<span>${esc(r.role)}</span>` : ""}</div>
-      ${r.proof ? `<button class="btn small ghost" data-proof="${esc(r.id)}">Preuve</button>` : ""}
+      ${r.proof ? `<button class="btn small ghost" data-proof="${esc(r.id)}">${tr("proof")}</button>` : ""}
     </article>`).join("");
 }
 
@@ -167,7 +167,7 @@ function renderContacts() {
     const ico = c.image ? `<img src="${esc(imgSrc(c.image))}" alt="" data-i="${ini}" onerror="this.replaceWith(this.dataset.i)">` : /mail/i.test(c.name) ? SVG_MAIL : ini;
     return `<div class="ct">
       <button class="ct-main" data-open="${i}"><span class="ico">${ico}</span><span><b>${esc(c.name)}</b><span>${esc(c.value)}</span></span></button>
-      <button class="ct-copy" data-copy="${i}" aria-label="Copier ${esc(c.name)}">Copier</button>
+      <button class="ct-copy" data-copy="${i}" aria-label="${esc(c.name)}">${tr("copyb")}</button>
     </div>`;
   }).join("");
 }
@@ -177,10 +177,10 @@ function renderFaq() {
   box.innerHTML = DATA.faq.map((q) => `<details><summary>${esc(q.question)}</summary><p>${esc(q.answer)}</p></details>`).join("");
 }
 
-const STATUS_LABELS = { actif: "Actif", bientot: "Bientôt là", inactif: "Pas actif" };
+const STATUS_KEYS = { actif: "s_actif", bientot: "s_bientot", inactif: "s_inactif" };
 function renderStatus() {
   const p = $("#statusPill"), st = DATA.status || { state: "actif", text: "" };
-  const label = st.state === "autre" ? st.text : STATUS_LABELS[st.state];
+  const label = st.state === "autre" ? st.text : tr(STATUS_KEYS[st.state]);
   if (!label) { p.hidden = true; return; }
   p.className = "status-pill " + st.state;
   p.querySelector("span").textContent = label;
@@ -195,12 +195,27 @@ const THEMES = [
 function applyTheme(id) {
   id = THEMES.some((t) => t[0] === id) ? id : "foret";
   document.documentElement.setAttribute("data-theme", id);
-  try { localStorage.setItem("nexi-theme", id); } catch (e) { /* pas grave */ }
   const m = document.querySelector('meta[name="theme-color"]');
   if (m) m.content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#0F1411";
 }
+const UKEY = "nexi-theme-user";
+const userTheme = () => { try { return localStorage.getItem(UKEY); } catch (e) { return null; } };
+function themeFx(id) {
+  const r = document.documentElement;
+  r.classList.add("tt"); applyTheme(id);
+  setTimeout(() => r.classList.remove("tt"), 700);
+}
+function openPicker(kind) {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const head = `<button class="x" data-close aria-label="${esc(tr("close"))}">×</button>`;
+  $("#kSheet").innerHTML = kind === "theme"
+    ? `${head}<div class="pick"><h3>${esc(tr("theme_t"))}</h3><div class="pgrid">${THEMES.map(([id, l, bg, ac]) => `<button data-pick-theme="${id}" class="${cur === id ? "on" : ""}"><span class="sw" style="background:linear-gradient(135deg,${bg} 50%,${ac} 50%)"></span>${l}</button>`).join("")}</div>${userTheme() ? `<button class="btn small ghost" data-pick-reset>${esc(tr("theme_def"))}</button>` : ""}</div>`
+    : `${head}<div class="pick"><h3>${esc(tr("lang_t"))}</h3><div class="pgrid">${LANGS.map(([c, s, n]) => `<button data-pick-lang="${c}" class="${lang === c ? "on" : ""}"><span class="sw" style="display:grid;place-items:center;font-weight:800;font-size:.8rem">${s}</span>${n}</button>`).join("")}</div></div>`;
+  openModal("#kModal");
+}
 async function setTheme(id) {
-  applyTheme(id);
+  try { localStorage.removeItem(UKEY); } catch (e) { /* ok */ }
+  themeFx(id);
   try {
     const r = await api({ action: "setTheme", theme: id });
     DATA = Object.assign(DATA, r.data);
@@ -218,7 +233,7 @@ function syncSound(p) {
   quiet.muted = true;
   loud.muted = !on;
   loud.volume = 1;
-  p.btn.textContent = on ? "🔊 Son" : "🔇 Son";
+  p.btn.textContent = (on ? "🔊 " : "🔇 ") + tr("snd");
 }
 ["pointerdown", "touchstart", "keydown"].forEach((ev) => document.addEventListener(ev, () => {
   if (soundOn) return;
@@ -236,10 +251,10 @@ function renderCompare() {
     <div class="vba" style="--p:50%">
       <video class="before" data-src="${esc(c.before)}" muted loop playsinline preload="none"></video>
       <video class="after" data-src="${esc(c.after)}" muted loop playsinline preload="none"></video>
-      <span class="vtag a">Avant</span><span class="vtag b">Après</span>
+      <span class="vtag a">${tr("before")}</span><span class="vtag b">${tr("after")}</span>
       <div class="vbar"></div><div class="vgrip" aria-hidden="true">⇆</div>
       <input type="range" min="0" max="100" value="50" aria-label="Comparer avant et après">
-      <button class="snd" type="button">🔇 Son</button>
+      <button class="snd" type="button">🔇 ${tr("snd")}</button>
     </div>
     ${c.caption ? `<p>${esc(c.caption)}</p>` : ""}
   </div>`).join("");
@@ -264,7 +279,8 @@ function renderCompare() {
 }
 
 function renderAll() {
-  applyTheme(DATA.theme);
+  try { localStorage.setItem("nexi-theme", DATA.theme); } catch (e) { /* ok */ }
+  applyTheme(userTheme() || DATA.theme);
   renderStatus();
   renderCompare();
   renderViews(); renderChannels(); renderFilters(); renderVideos(); renderReviews(); renderFaq(); renderContacts();
@@ -278,7 +294,7 @@ async function copyText(txt) {
     try { document.execCommand("copy"); } catch (e2) { /* ignore */ }
     ta.remove();
   }
-  toast("Copié : " + txt);
+  toast(tr("copied") + txt);
 }
 
 /* ---------- Animations ---------- */
@@ -292,12 +308,19 @@ function runTimeline() {
     head.style.left = p * 100 + "%";
     tc.textContent = fmt(p * total);
     clips.forEach((c) => {
-      if (!c.classList.contains("on") && p * 100 >= parseFloat(c.style.getPropertyValue("--x"))) c.classList.add("on");
+      c.classList.toggle("on", p * 100 >= parseFloat(c.style.getPropertyValue("--x")));
     });
   };
+  let stop = false, drag = false;
+  const inner = tl.querySelector(".tl-in");
+  const at = (e) => { stop = true; const r = inner.getBoundingClientRect(); setP(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))); };
+  tl.addEventListener("pointerdown", (e) => { drag = true; try { tl.setPointerCapture(e.pointerId); } catch (e2) { /* ok */ } at(e); });
+  tl.addEventListener("pointermove", (e) => { if (drag) at(e); });
+  ["pointerup", "pointercancel"].forEach((ev) => tl.addEventListener(ev, () => { drag = false; }));
   if (reduce) { clips.forEach((c) => c.classList.add("on")); setP(1); return; }
   const t0 = performance.now() + 400, dur = 3400;
   const step = (t) => {
+    if (stop) return;
     const k = Math.max(0, Math.min(1, (t - t0) / dur));
     setP(k * k * (3 - 2 * k));
     if (k < 1) requestAnimationFrame(step);
@@ -326,24 +349,122 @@ function setupScroll() {
 
 }
 
+/* ---------- Effets vivants ---------- */
+let typeTimer = 0, spyMark = null;
+function typeHero() {
+  const h = $("#h1"), full = tr("hero_h1");
+  clearTimeout(typeTimer);
+  h.classList.remove("caret"); h.style.minHeight = "";
+  if (reduce) { h.textContent = full; return; }
+  h.textContent = full;
+  h.style.minHeight = h.offsetHeight + "px";
+  h.textContent = ""; h.classList.add("caret");
+  let i = 0;
+  const tick = () => {
+    h.textContent = full.slice(0, ++i);
+    if (i < full.length) typeTimer = setTimeout(tick, 34 + Math.random() * 46);
+    else typeTimer = setTimeout(() => h.classList.remove("caret"), 1800);
+  };
+  typeTimer = setTimeout(tick, 350);
+}
+
+function setupFx() {
+  const ids = ["presentation", "chaines", "montages", "avantapres", "avis", "faq-s", "contact"];
+  const nowbar = $("#nowbar"), nN = $("#nowN"), nT = $("#nowT");
+  let cur = "", footerIn = false;
+  const fab = $("#fab");
+  spyMark = () => {
+    const n = ids.indexOf(cur) + 1;
+    document.querySelectorAll(".toc li").forEach((li) => li.classList.toggle("on", li.firstElementChild.getAttribute("href") === "#" + cur));
+    if (!n) return;
+    nowbar.classList.add("show");
+    nN.textContent = n; nT.textContent = tr("t" + n);
+    [nN, nT].forEach((x) => { x.classList.remove("swap"); void x.offsetWidth; x.classList.add("swap"); });
+  };
+  const fabUpd = () => fab.classList.toggle("show", scrollY > 420 && !footerIn);
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { cur = e.target.id; spyMark(); } }), { rootMargin: "-45% 0px -50% 0px" });
+    ids.forEach((id) => { const s = document.getElementById(id); if (s) io.observe(s); });
+    new IntersectionObserver((es) => { footerIn = es[0].isIntersecting; fabUpd(); }, { threshold: 0.05 }).observe($("#contact"));
+  }
+  addEventListener("scroll", () => { if (scrollY < 300) nowbar.classList.remove("show"); fabUpd(); }, { passive: true });
+  if (reduce) return;
+  const untilt = () => document.querySelectorAll(".card.tilt").forEach((c) => c.classList.remove("tilt"));
+  document.addEventListener("pointermove", (e) => {
+    const c = e.target.closest && e.target.closest(".card");
+    if (c) {
+      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      c.style.setProperty("--ry", ((x - 0.5) * 8).toFixed(1) + "deg");
+      c.style.setProperty("--rx", ((0.5 - y) * 6).toFixed(1) + "deg");
+      c.style.setProperty("--mx", x * 100 + "%"); c.style.setProperty("--my", y * 100 + "%");
+      c.classList.add("tilt");
+    }
+    if (scrollY < 700) {
+      const r = $("#top").getBoundingClientRect(), g = $("#glow");
+      g.style.setProperty("--gx", Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)) + "%");
+      g.style.setProperty("--gy", Math.max(0, Math.min(100, ((e.clientY - r.top + 60) / 440) * 100)) + "%");
+    }
+  }, { passive: true });
+  ["pointerup", "pointercancel"].forEach((ev) => document.addEventListener(ev, untilt, { passive: true }));
+  document.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest && e.target.closest(".btn,.chip,.fab");
+    if (!b) return;
+    const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2;
+    const d = document.createElement("span");
+    d.className = "rip";
+    d.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+    b.appendChild(d); setTimeout(() => d.remove(), 650);
+  }, { passive: true });
+}
+
+function setupForm() {
+  const f = $("#cform"), msg = $("#cmsg");
+  const vals = () => Object.fromEntries(new FormData(f));
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const v = vals();
+    if (!String(v.contact).trim() || !String(v.message).trim()) { msg.className = "msg err"; msg.textContent = tr("f_need"); return; }
+    const btn = f.querySelector("[type=submit]");
+    btn.disabled = true;
+    try {
+      const r = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(f)).toString() });
+      if (!r.ok) throw new Error("send");
+      f.reset(); msg.className = "msg"; msg.textContent = tr("f_ok");
+    } catch (err) { msg.className = "msg err"; msg.textContent = tr("f_err"); }
+    btn.disabled = false;
+  });
+  $("#cmail").addEventListener("click", () => {
+    const v = vals();
+    const body = (v.message || "") + "\n\n- " + (v.name || "") + " (" + (v.contact || "") + ")\n" + tr("f_type") + ": " + v.type + "\n" + tr("f_delay") + ": " + (v.delay || "");
+    location.href = "mailto:neximonteur@gmail.com?subject=" + encodeURIComponent("Montage vidéo - " + (v.name || "")) + "&body=" + encodeURIComponent(body);
+  });
+}
+
 /* ---------- Fenêtres ---------- */
 let lastFocus = null;
 function openModal(id) { lastFocus = document.activeElement; $(id).classList.add("open"); const x = $(id + " .x"); if (x) x.focus(); }
 function closeModals() {
   document.querySelectorAll(".modal.open").forEach((m) => m.classList.remove("open"));
+  $("#vSheet").innerHTML = "";
   if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function previewHtml(v) {
+  const id = ytId(v.url);
+  if (!id) return `<div class="thumb">${thumbHtml(v)}</div>`;
+  const short = /\/shorts\//.test(v.url);
+  return `<div class="pv${short ? " short" : ""}"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?start=0&end=60&autoplay=1&playsinline=1&rel=0&modestbranding=1" title="${esc(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><p class="pvn">${tr("prev")}</p>`;
 }
 function openVideo(id) {
   const v = DATA.videos.find((x) => x.id === id);
   if (!v) return;
   $("#vSheet").innerHTML = `
     <button class="x" data-close aria-label="Fermer">×</button>
-    <div class="thumb">${thumbHtml(v)}</div>
+    ${previewHtml(v)}
     <div class="vbody">
-      <div class="meta">${tag(v.category)}${Number(v.views) ? `<span>${Number(v.views).toLocaleString("fr-FR")} vues</span>` : ""}</div>
+      <div class="meta">${tag(v.category)}${Number(v.views) ? `<span>${Number(v.views).toLocaleString("fr-FR")} ${tr("v_views")}</span>` : ""}</div>
       <h3>${esc(v.title)}</h3>
       ${v.description ? `<p>${esc(v.description)}</p>` : ""}
-      <a class="btn main" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">Voir sur ${esc(platformOf(v.url))}</a>
+      <a class="btn main" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(tr("watch", { p: platformOf(v.url) }))}</a>
     </div>`;
   openModal("#vModal");
 }
@@ -356,6 +477,13 @@ function openProof(id) {
 
 document.addEventListener("click", (e) => {
   const t = e.target;
+  const pt = t.closest("[data-pick-theme]");
+  if (pt) { try { localStorage.setItem(UKEY, pt.dataset.pickTheme); } catch (e2) { /* ok */ } themeFx(pt.dataset.pickTheme); return closeModals(); }
+  if (t.closest("[data-pick-reset]")) { try { localStorage.removeItem(UKEY); } catch (e2) { /* ok */ } themeFx(DATA.theme); return closeModals(); }
+  const pl = t.closest("[data-pick-lang]");
+  if (pl) { setLang(pl.dataset.pickLang); return closeModals(); }
+  if (t.closest("#btnTheme")) return openPicker("theme");
+  if (t.closest("#btnLang")) return openPicker("lang");
   const card = t.closest(".card[data-id]");
   if (card) return openVideo(card.dataset.id);
   const chip = t.closest(".chip[data-cat]");
@@ -677,7 +805,14 @@ addEventListener("keydown", (e) => {
 });
 
 /* ---------- Démarrage ---------- */
-runTimeline();
+if ("IntersectionObserver" in window) {
+  const tio = new IntersectionObserver((es) => { if (es[0].isIntersecting) { tio.disconnect(); runTimeline(); } }, { threshold: 0.3 });
+  tio.observe($("#tl"));
+} else runTimeline();
 setupScroll();
+setupFx();
+setupForm();
+document.addEventListener("langchange", () => { renderAll(); typeHero(); if (spyMark) spyMark(); });
+typeHero();
 load();
 })();
