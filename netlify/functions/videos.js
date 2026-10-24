@@ -18,8 +18,6 @@ const DEFAULT_CONTACTS = [
 ];
 
 const DEFAULT_FAQ = [
-  { id: "q-prix", question: "Combien ça coûte ?", answer: "Pour une vidéo de 10 minutes avec une intro, un hook dynamique, un montage efficace du début à la fin et quelques effets, on est sur 50 €. Le prix est négociable selon ton projet." },
-  { id: "q-paiement", question: "Comment se passe le paiement ?", answer: "Sur PayPal, une fois la vidéo montée. Je t'envoie la vidéo entière avec un filigrane, on fait les ajustements, puis je t'envoie la première moitié sans filigrane. Tu paies la moitié, je t'envoie la seconde moitié, et tu paies le reste." },
   { id: "q-delai", question: "Quels sont les délais ?", answer: "Je rends mes montages rapidement. Dis-moi ta date limite dans ton message et on s'organise ensemble." },
   { id: "q-retouches", question: "Je peux demander des modifications ?", answer: "Oui, je fais tous les ajustements nécessaires avant le rendu final." },
   { id: "q-formats", question: "Quels types de vidéos tu montes ?", answer: "Des vidéos YouTube, des shorts, des TikTok, et d'autres formats comme des pubs ou du marketing. Je suis flexible sur toutes les niches." }
@@ -27,10 +25,17 @@ const DEFAULT_FAQ = [
 
 const STATES = ["actif", "bientot", "inactif", "autre"];
 
+const THEMES = ["foret","creme","minuit","neon","couchant","papier","ocean","rose","retro","or"];
+
+function okVideo(v) {
+  return /^\/[\w\-./%]+\.(mp4|webm|mov)$/i.test(v) || /^https?:\/\/\S+$/i.test(v) ? v : "";
+}
+
 const COLLECTIONS = {
   videos: { prefix: "v", fields: ["title", "url", "category", "description", "thumb", "views"], required: ["title", "url", "category"], images: ["thumb"], links: ["url"], linkRequired: true },
   channels: { prefix: "ch", fields: ["name", "platform", "handle", "url", "image"], required: ["name"], images: ["image"], links: ["url"] },
   reviews: { prefix: "r", fields: ["author", "role", "text", "proof"], required: ["author", "text"], images: ["proof"], links: [] },
+  compare: { prefix: "p", fields: ["title", "caption", "before", "after"], required: ["before", "after"], images: [], links: [], videos: ["before", "after"] },
   faq: { prefix: "q", fields: ["question", "answer"], required: ["question", "answer"], images: [], links: [] },
   contacts: { prefix: "c", fields: ["name", "value", "url", "image"], required: ["name", "value"], images: ["image"], links: ["url"], mailto: true }
 };
@@ -56,6 +61,8 @@ function normalize(d) {
     videos: Array.isArray(d.videos) ? d.videos : [],
     channels: Array.isArray(d.channels) ? d.channels : [],
     reviews: Array.isArray(d.reviews) ? d.reviews : [],
+    theme: THEMES.includes(d.theme) ? d.theme : "foret",
+    compare: Array.isArray(d.compare) ? d.compare : [],
     status: d.status && STATES.includes(d.status.state) ? { state: d.status.state, text: String(d.status.text || "").slice(0, 40) } : { state: "actif", text: "" },
     faq: Array.isArray(d.faq) ? d.faq : DEFAULT_FAQ.map((q) => ({ ...q })),
     contacts: Array.isArray(d.contacts) ? d.contacts : DEFAULT_CONTACTS.map((c) => ({ ...c }))
@@ -84,6 +91,7 @@ function clean(name, item) {
       v = typeof v === "string" ? v.trim().slice(0, f === "text" || f === "description" || f === "answer" ? 2000 : 500) : "";
       if (spec.images.includes(f)) v = okImage(v);
       if (spec.links.includes(f)) v = okLink(v, spec.mailto);
+      if ((spec.videos || []).includes(f)) v = okVideo(v);
     }
     out[f] = v;
   }
@@ -167,6 +175,18 @@ exports.handler = async (event) => {
     // Anciens noms d'actions (au cas où une vieille version du site est en cache)
     if (payload.action === "addVideo") { payload = { ...payload, action: "add", collection: "videos", item: payload.video }; }
     if (payload.action === "deleteVideo") { payload = { ...payload, action: "delete", collection: "videos" }; }
+
+    if (payload.action === "setTheme") {
+      if (!THEMES.includes(payload.theme)) return cors({ error: "Thème inconnu." }, 400);
+      try {
+        const data = normalize(await store.get(KEY, { type: "json" }));
+        data.theme = payload.theme;
+        await store.setJSON(KEY, data);
+        return cors({ success: true, data });
+      } catch (e) {
+        return cors({ error: "Erreur de sauvegarde: " + e.message }, 500);
+      }
+    }
 
     if (payload.action === "setStatus") {
       const state = STATES.includes(payload.state) ? payload.state : "actif";
