@@ -6,7 +6,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let DATA = { categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } };
+let DATA = { categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], compare: [], theme: "foret", status: { state: "actif", text: "" } };
 let activeCat = "Tout";
 let pwd = sessionStorage.getItem("nexi_pwd") || "";
 
@@ -84,7 +84,7 @@ async function load() {
     const r = await fetch(API, { cache: "no-store" });
     const j = await r.json();
     if (!r.ok || j.error) throw new Error(j.error || r.status);
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } }, j);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], compare: [], theme: "foret", status: { state: "actif", text: "" } }, j);
     $("#vErr").innerHTML = "";
   } catch (e) {
     $("#vErr").innerHTML = `<div class="error">Impossible de charger les données (${esc(e.message)}). Recharge la page dans un instant.</div>`;
@@ -187,8 +187,86 @@ function renderStatus() {
   p.hidden = false;
 }
 
+const THEMES = [
+  ["foret", "Forêt", "#0F1411", "#D4F25A"], ["creme", "Crème", "#F6F1E7", "#2F6B4F"], ["minuit", "Minuit", "#0B1020", "#4CC9F0"],
+  ["neon", "Néon", "#09090B", "#FF2EA6"], ["couchant", "Couchant", "#1A1022", "#FF9F43"], ["papier", "Papier", "#FAF8F3", "#D62828"],
+  ["ocean", "Océan", "#EAF4FB", "#0077B6"], ["rose", "Rose", "#FBEFF1", "#B5254F"], ["retro", "Rétro", "#EFE4CC", "#C2570C"], ["or", "Noir & or", "#0C0B09", "#D4AF37"]
+];
+function applyTheme(id) {
+  id = THEMES.some((t) => t[0] === id) ? id : "foret";
+  document.documentElement.setAttribute("data-theme", id);
+  try { localStorage.setItem("nexi-theme", id); } catch (e) { /* pas grave */ }
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#0F1411";
+}
+async function setTheme(id) {
+  applyTheme(id);
+  try {
+    const r = await api({ action: "setTheme", theme: id });
+    DATA = Object.assign(DATA, r.data);
+    renderAdmin();
+    toast("Thème changé.");
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------- Avant / après (vidéos) ---------- */
+let soundOn = false;
+const vplayers = [];
+function syncSound(p) {
+  const pos = p.pos / 100, on = soundOn && p.sound;
+  const loud = pos >= 0.5 ? p.b : p.a, quiet = pos >= 0.5 ? p.a : p.b;
+  quiet.muted = true;
+  loud.muted = !on;
+  loud.volume = 1;
+  p.btn.textContent = on ? "🔊 Son" : "🔇 Son";
+}
+["pointerdown", "touchstart", "keydown"].forEach((ev) => document.addEventListener(ev, () => {
+  if (soundOn) return;
+  soundOn = true;
+  vplayers.forEach(syncSound);
+}, { passive: true }));
+
+function renderCompare() {
+  const box = $("#compare"), sec = $("#avantapres"), toc = $("#toc-ba");
+  vplayers.length = 0;
+  const list = DATA.compare || [];
+  sec.hidden = toc.hidden = !list.length;
+  box.innerHTML = list.map((c, i) => `<div class="cmp rv seen" data-i="${i}">
+    ${c.title ? `<h3>${esc(c.title)}</h3>` : ""}
+    <div class="vba" style="--p:50%">
+      <video class="before" data-src="${esc(c.before)}" muted loop playsinline preload="none"></video>
+      <video class="after" data-src="${esc(c.after)}" muted loop playsinline preload="none"></video>
+      <span class="vtag a">Avant</span><span class="vtag b">Après</span>
+      <div class="vbar"></div><div class="vgrip" aria-hidden="true">⇆</div>
+      <input type="range" min="0" max="100" value="50" aria-label="Comparer avant et après">
+      <button class="snd" type="button">🔇 Son</button>
+    </div>
+    ${c.caption ? `<p>${esc(c.caption)}</p>` : ""}
+  </div>`).join("");
+  box.querySelectorAll(".cmp").forEach((el) => {
+    const w = el.querySelector(".vba"), b = w.querySelector("video.before"), a = w.querySelector("video.after");
+    const p = { b, a, pos: 50, sound: true, btn: w.querySelector(".snd") };
+    vplayers.push(p);
+    w.querySelector("input").addEventListener("input", (e) => { p.pos = +e.target.value; w.style.setProperty("--p", p.pos + "%"); syncSound(p); });
+    p.btn.addEventListener("click", (e) => { e.stopPropagation(); p.sound = !p.sound; soundOn = true; syncSound(p); });
+    [b, a].forEach((v) => v.addEventListener("error", () => {
+      if (!w.querySelector(".vnote")) w.insertAdjacentHTML("beforeend", '<div class="vnote">Vidéo introuvable. Vérifie le lien dans l’admin.</div>');
+    }));
+    b.addEventListener("timeupdate", () => { if (Math.abs(a.currentTime - b.currentTime) > 0.3) a.currentTime = b.currentTime; });
+    if (!("IntersectionObserver" in window)) return;
+    new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) {
+        [b, a].forEach((v) => { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); });
+        syncSound(p);
+      } else [b, a].forEach((v) => v.pause());
+    }), { threshold: 0.35 }).observe(w);
+  });
+}
+
 function renderAll() {
+  applyTheme(DATA.theme);
   renderStatus();
+  renderCompare();
   renderViews(); renderChannels(); renderFilters(); renderVideos(); renderReviews(); renderFaq(); renderContacts();
 }
 
@@ -239,20 +317,13 @@ function setupScroll() {
   upd();
 
 
-  const items = document.querySelectorAll(".toc li,.chap-h,.lead,.cols,.price,.pay,.grid-ch,.filters,.grid-r,.faq,footer .hint,footer .grid-c");
+  const items = document.querySelectorAll(".toc li,.chap-h,.lead,.cols,.cmp,.grid-ch,.filters,.grid-r,.faq,footer .hint,footer .grid-c");
   items.forEach((n) => n.classList.add("rv"));
   if ("IntersectionObserver" in window && !reduce) {
     const ro = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("seen"); ro.unobserve(e.target); } }), { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
     items.forEach((n) => ro.observe(n));
   } else items.forEach((n) => n.classList.add("seen"));
 
-  const pay = $("#pay");
-  if ("IntersectionObserver" in window) {
-    const io = new IntersectionObserver((es) => {
-      if (es[0].isIntersecting) { pay.classList.add("go"); io.disconnect(); }
-    }, { threshold: 0.35 });
-    io.observe(pay);
-  } else pay.classList.add("go");
 }
 
 /* ---------- Fenêtres ---------- */
@@ -343,6 +414,16 @@ const SPEC = {
     ],
     title: (r) => r.author, sub: (r) => (r.text || "").slice(0, 60) + (r.proof ? " · avec preuve" : "")
   },
+  compare: {
+    label: "Avant / après", add: "Ajouter un avant / après",
+    fields: [
+      { k: "title", l: "Titre (facultatif)", t: "text" },
+      { k: "before", l: "Vidéo AVANT (lien .mp4 ou chemin, ex. /videos/avant.mp4)", t: "text", req: 1 },
+      { k: "after", l: "Vidéo APRÈS (lien .mp4 ou chemin, ex. /videos/apres.mp4)", t: "text", req: 1 },
+      { k: "caption", l: "Phrase sous la vidéo (facultatif)", t: "text" }
+    ],
+    title: (p) => p.title || "Avant / après", sub: (p) => (p.before || "").split("/").pop()
+  },
   faq: {
     label: "FAQ", add: "Ajouter une question",
     fields: [
@@ -410,6 +491,10 @@ function renderAdmin() {
   adminEl.innerHTML = `
     <div class="admin-bar"><b>Espace admin</b><span><button data-alock>Verrouiller</button> <button data-aclose>Fermer</button></span></div>
     <div class="admin-in">
+      <div class="sbox">
+        <h3>Thème du site</h3>
+        <div class="themes">${THEMES.map(([id, l, bg, ac]) => `<button data-theme-set="${id}" class="${DATA.theme === id ? "on" : ""}"><span class="sw" style="background:linear-gradient(135deg,${bg} 50%,${ac} 50%)"></span>${l}</button>`).join("")}</div>
+      </div>
       <div class="sbox">
         <h3>Mon statut</h3>
         <div class="row">${[["actif", "Actif"], ["bientot", "Bientôt là"], ["inactif", "Pas actif"], ["autre", "Autre"]].map(([k, l]) => `<button data-state="${k}" class="${(DATA.status || {}).state === k ? "on" : ""}">${l}</button>`).join("")}</div>
@@ -507,7 +592,7 @@ async function save() {
       ? { action: "update", collection: A.tab, id: A.editId, item: A.vals }
       : { action: "add", collection: A.tab, item: A.vals };
     const r = await api(body);
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } }, r.data);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], compare: [], theme: "foret", status: { state: "actif", text: "" } }, r.data);
     const was = A.editId ? "Modifié." : "Ajouté.";
     A.editId = null; A.vals = {};
     A.msg = was; A.err = false;
@@ -522,7 +607,7 @@ async function del() {
   if (!A.editId || !confirm("Supprimer définitivement ?")) return;
   try {
     const r = await api({ action: "delete", collection: A.tab, id: A.editId });
-    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], status: { state: "actif", text: "" } }, r.data);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], compare: [], theme: "foret", status: { state: "actif", text: "" } }, r.data);
     A.editId = null; A.vals = {};
     A.msg = "Supprimé."; A.err = false;
     renderAll(); renderAdmin();
@@ -558,6 +643,8 @@ adminEl.addEventListener("click", (e) => {
     return;
   }
   if (t.closest("[data-new]")) { A.editId = null; A.vals = {}; A.msg = ""; return renderAdmin(); }
+  const thb = t.closest("[data-theme-set]");
+  if (thb) return setTheme(thb.dataset.themeSet);
   const stb = t.closest("[data-state]");
   if (stb) return setStatus(stb.dataset.state);
   if (t.closest("[data-stsave]")) return setStatus("autre", ($("#stText", adminEl) || {}).value || "");
