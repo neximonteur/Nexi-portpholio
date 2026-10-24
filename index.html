@@ -11,11 +11,13 @@
 <meta name="theme-color" content="#0F1411">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600;9..144,800&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=Syne:wght@600;800&family=Manrope:wght@400;500;700&family=DM+Serif+Display&family=Playfair+Display:wght@600;800&family=Lora:wght@400;500&family=Outfit:wght@400;500;700&family=Cormorant+Garamond:wght@600;700&family=Jost:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem("nexi-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <style>
 :root{
   --bg:#0F1411; --surface:#171F19; --ink:#F2EEE3; --muted:#9BA79D; --line:#2A352D;
-  --accent:#D4F25A; --marker:#FF6B4A;
+  --accent:#D4F25A; --marker:#FF6B4A; --on-accent:#13151B; --danger:#FF7A6B;
+  --deep:#0A0F0C; --deep2:#151D17; --deep3:#1E2A21; --deep-line:#2A352D; --deep-ink:#F2EEE3; --deep-mute:#9BA79D;
   --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
   --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
@@ -30,7 +32,7 @@ a{color:inherit}
 h1,h2,h3{font-family:var(--display);line-height:1.05;letter-spacing:-.02em}
 
 /* Barre du haut */
-.topbar{position:sticky;top:0;z-index:30;background:rgba(15,20,17,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
 .logo{font:800 1.5rem var(--display);letter-spacing:-.04em;padding:6px 4px;user-select:none;-webkit-user-select:none}
 .views-top{display:flex;align-items:baseline;gap:8px;font-size:.8rem;color:var(--muted);text-align:right}
@@ -55,7 +57,7 @@ h1,h2,h3{font-family:var(--display);line-height:1.05;letter-spacing:-.02em}
 .ruler{position:absolute;left:0;right:0;top:0;height:14px;background:repeating-linear-gradient(90deg,#4B5062 0 1px,transparent 1px 28px) bottom/100% 7px no-repeat}
 .track{position:relative;height:30px;margin-top:6px;background:rgba(255,255,255,.05);border-radius:6px}
 .clip{position:absolute;top:3px;bottom:3px;left:var(--x);width:var(--w);background:var(--c);border-radius:5px;padding:0 7px;font:600 .66rem/24px var(--body);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-.clip.dark{color:#13151B}
+.clip.dark{color:var(--on-accent)}
 .clip.on{transform:scaleX(1)}
 .head{position:absolute;top:0;bottom:-2px;left:0;width:2px;background:var(--marker);z-index:2;pointer-events:none}
 .head span{position:absolute;top:-4px;left:50%;transform:translateX(-50%);background:var(--marker);color:var(--ink);font:700 .7rem var(--body);padding:1px 6px;border-radius:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -229,14 +231,14 @@ footer p.hint{color:#A3A8BA;margin-bottom:22px;max-width:46ch}
 /* Thème sombre : ajustements */
 .tl{background:#1B261F;border:1px solid var(--line)}
 .ruler{background:repeating-linear-gradient(90deg,#4A5A4F 0 1px,transparent 1px 28px) bottom/100% 7px no-repeat}
-.head span{color:#13151B}
+.head span{color:var(--on-accent)}
 .thumb{background:#000}
 footer{background:#0A0F0C;border-top:1px solid var(--line)}
 .price{border:1.5px solid var(--line)}
 .price .amount{text-shadow:0 0 40px rgba(212,242,90,.25)}
 .price .amount small{text-shadow:none}
-.seg.vid{color:#13151B}
-.seg.cash .fill{color:#13151B}
+.seg.vid{color:var(--on-accent)}
+.seg.cash .fill{color:var(--on-accent)}
 .chip{border-color:var(--line)}
 .chip:hover{border-color:var(--ink);background:var(--surface)}
 .pills li{border-color:#3A4A3E}
@@ -244,19 +246,19 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
 .card:hover{box-shadow:0 10px 30px -12px rgba(212,242,90,.25)}
 .play{background:var(--accent)}
 .btn{border-color:var(--ink)}
-.btn.main:hover{color:#13151B}
-.btn.ghost:hover{color:#13151B}
-.sheet .x{background:var(--ink);color:#13151B}
+.btn.main:hover{color:var(--on-accent)}
+.btn.ghost:hover{color:var(--on-accent)}
+.sheet .x{background:var(--ink);color:var(--on-accent)}
 .sheet{border:1px solid var(--line)}
-.toast{background:var(--ink);color:#13151B}
+.toast{background:var(--ink);color:var(--on-accent)}
 .admin-bar{background:#0A0F0C;border-bottom:1px solid var(--line)}
 .admin-bar button{background:#1E2A21}
 .tabs button{border-color:var(--line)}
-.tabs button.on{background:var(--ink);color:#13151B}
+.tabs button.on{background:var(--ink);color:var(--on-accent)}
 .form{border:1.5px solid var(--line)}
 .fld input,.fld textarea,.fld select{background:var(--bg);color:var(--ink)}
 .btn.danger{border-color:#FF7A6B;color:#FF7A6B}
-.btn.danger:hover{background:#FF7A6B;color:#13151B}
+.btn.danger:hover{background:#FF7A6B;color:var(--on-accent)}
 .status.err{color:#FF7A6B}
 .status.ok{color:var(--accent)}
 .error{background:#3A1713;color:#FFB4A8}
@@ -300,8 +302,54 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
 .sbox h3{font-size:1.05rem;margin-bottom:10px}
 .sbox .row{display:flex;flex-wrap:wrap;gap:8px}
 .sbox .row button{padding:9px 14px;border-radius:99px;border:1.5px solid var(--line);font-weight:600;font-size:.92rem}
-.sbox .row button.on{background:var(--ink);color:#13151B;border-color:var(--ink)}
+.sbox .row button.on{background:var(--ink);color:var(--on-accent);border-color:var(--ink)}
 .sbox input{margin-top:10px;width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+
+/* Thèmes */
+:root[data-theme="creme"]{--bg:#F6F1E7;--surface:#FFFDF8;--ink:#1E2A22;--muted:#5F6B62;--line:#DCD5C4;--accent:#2F6B4F;--marker:#C1443D;--on-accent:#FFFFFF;--deep:#1E2A22;--deep2:#2A3A30;--deep3:#364A3D;--deep-line:#3F5446;--deep-ink:#F6F1E7;--deep-mute:#B3BFB6;--danger:#B3261E;--display:"Fraunces",system-ui,sans-serif;--body:"DM Sans",system-ui,sans-serif}
+:root[data-theme="minuit"]{--bg:#0B1020;--surface:#121A30;--ink:#E8EEFF;--muted:#8E9BC0;--line:#223056;--accent:#4CC9F0;--marker:#F72585;--on-accent:#06101F;--deep:#060A16;--deep2:#0F172E;--deep3:#18234A;--deep-line:#223056;--deep-ink:#E8EEFF;--deep-mute:#8E9BC0;--danger:#FF7A8A;--display:"Space Grotesk",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif}
+:root[data-theme="neon"]{--bg:#09090B;--surface:#141418;--ink:#F5F5F7;--muted:#9A9AA6;--line:#2A2A33;--accent:#FF2EA6;--marker:#22E3FF;--on-accent:#0A0A0C;--deep:#000000;--deep2:#101014;--deep3:#1B1B22;--deep-line:#2A2A33;--deep-ink:#F5F5F7;--deep-mute:#9A9AA6;--danger:#FF7A8A;--display:"Syne",system-ui,sans-serif;--body:"Manrope",system-ui,sans-serif}
+:root[data-theme="couchant"]{--bg:#1A1022;--surface:#251633;--ink:#FFEBDD;--muted:#C4A6B8;--line:#3C2552;--accent:#FF9F43;--marker:#FF5E7E;--on-accent:#1A1022;--deep:#12091A;--deep2:#21122E;--deep3:#2E1A40;--deep-line:#3C2552;--deep-ink:#FFEBDD;--deep-mute:#C4A6B8;--danger:#FF8A9E;--display:"DM Serif Display",system-ui,sans-serif;--body:"DM Sans",system-ui,sans-serif}
+:root[data-theme="papier"]{--bg:#FAF8F3;--surface:#FFFFFF;--ink:#111111;--muted:#5E5E5E;--line:#DAD6CB;--accent:#D62828;--marker:#111111;--on-accent:#FFFFFF;--deep:#111111;--deep2:#1E1E1E;--deep3:#2A2A2A;--deep-line:#3A3A3A;--deep-ink:#FAF8F3;--deep-mute:#B5B5B5;--danger:#B3261E;--display:"Playfair Display",system-ui,sans-serif;--body:"Lora",system-ui,sans-serif}
+:root[data-theme="ocean"]{--bg:#EAF4FB;--surface:#FFFFFF;--ink:#0B2A43;--muted:#52708A;--line:#C5DCEC;--accent:#0077B6;--marker:#FF7F50;--on-accent:#FFFFFF;--deep:#0B2A43;--deep2:#133A5B;--deep3:#1B4C75;--deep-line:#2A5D88;--deep-ink:#EAF4FB;--deep-mute:#A9C6DD;--danger:#B3261E;--display:"Outfit",system-ui,sans-serif;--body:"Outfit",system-ui,sans-serif}
+:root[data-theme="rose"]{--bg:#FBEFF1;--surface:#FFFFFF;--ink:#3B1523;--muted:#8A5A6B;--line:#F0D2D9;--accent:#B5254F;--marker:#D9577A;--on-accent:#FFFFFF;--deep:#3B1523;--deep2:#4F1F31;--deep3:#632A40;--deep-line:#7A3A52;--deep-ink:#FBEFF1;--deep-mute:#D9AEBB;--danger:#B3261E;--display:"Cormorant Garamond",system-ui,sans-serif;--body:"Jost",system-ui,sans-serif}
+:root[data-theme="retro"]{--bg:#EFE4CC;--surface:#F8F0DC;--ink:#3A2A1A;--muted:#7A6650;--line:#D6C6A2;--accent:#C2570C;--marker:#2F6B4F;--on-accent:#FFF8E8;--deep:#3A2A1A;--deep2:#4B3824;--deep3:#5E4730;--deep-line:#6F5A40;--deep-ink:#EFE4CC;--deep-mute:#C9B592;--danger:#B3261E;--display:"Space Mono",system-ui,sans-serif;--body:"Space Mono",system-ui,sans-serif}
+:root[data-theme="or"]{--bg:#0C0B09;--surface:#17140F;--ink:#F4EAD0;--muted:#A89C7F;--line:#332C1D;--accent:#D4AF37;--marker:#E8C766;--on-accent:#14110A;--deep:#070605;--deep2:#14110A;--deep3:#211C10;--deep-line:#332C1D;--deep-ink:#F4EAD0;--deep-mute:#A89C7F;--danger:#FF8A7A;--display:"Playfair Display",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif}
+[hidden]{display:none!important}
+.tl{background:var(--deep2);color:var(--deep-mute)}
+.ruler{background:repeating-linear-gradient(90deg,var(--deep-line) 0 1px,transparent 1px 28px) bottom/100% 7px no-repeat}
+footer{background:var(--deep);color:var(--deep-ink)}
+footer h2{color:var(--deep-ink)}
+footer p.hint,.ct span,.copy{color:var(--deep-mute)}
+.ct{background:var(--deep2);border:1px solid var(--deep-line)}
+.ct-main:hover,.ct-copy:hover{background:var(--deep3)}
+.ico{background:var(--deep3);color:var(--deep-ink)}
+.ct-copy{border-left-color:var(--deep-line)}
+.admin-bar{background:var(--deep);color:var(--deep-ink)}
+.admin-bar button{background:var(--deep3);color:var(--deep-ink)}
+.error{background:color-mix(in srgb,var(--danger) 16%,var(--bg));color:var(--danger)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:var(--danger);color:var(--on-accent)}
+.status.err{color:var(--danger)}
+.sbox .themes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sbox .themes button{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;border:1.5px solid var(--line);font-weight:600;font-size:.9rem;text-align:left}
+.sbox .themes button.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.sw{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line)}
+/* Avant / après vidéo */
+#avantapres .lead{font:400 1rem/1.5 var(--body);color:var(--muted);margin-bottom:18px}
+.cmp{margin-bottom:26px}
+.cmp h3{font:700 1.15rem var(--display);margin-bottom:10px}
+.vba{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;touch-action:pan-y;user-select:none;-webkit-user-select:none;border:1px solid var(--line)}
+.vba video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.vba video.after{clip-path:inset(0 0 0 var(--p,50%))}
+.vba .vtag{position:absolute;top:10px;padding:5px 11px;border-radius:99px;font:700 .75rem var(--body);letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.62);color:#fff}
+.vba .vtag.a{left:10px}.vba .vtag.b{right:10px;background:var(--accent);color:var(--on-accent)}
+.vba .vbar{position:absolute;top:0;bottom:0;left:var(--p,50%);width:3px;margin-left:-1.5px;background:var(--accent);pointer-events:none}
+.vba .vgrip{position:absolute;top:50%;left:var(--p,50%);width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:800;box-shadow:0 4px 16px rgba(0,0,0,.45);pointer-events:none}
+.vba input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.vba .snd{position:absolute;left:10px;bottom:10px;z-index:2;min-width:44px;height:38px;padding:0 12px;border-radius:99px;background:rgba(0,0,0,.62);color:#fff;font-weight:700;font-size:.85rem}
+.vba .vnote{position:absolute;inset:0;display:grid;place-items:center;color:#fff;text-align:center;padding:20px;background:rgba(0,0,0,.6)}
+.cmp p{color:var(--muted);margin-top:10px}
 
 @media(min-width:720px){
   .hero{padding-top:64px}
@@ -361,12 +409,13 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
   <nav class="toc wrap" aria-label="Sommaire">
     <h2>Sommaire</h2>
     <ol>
-      <li><a href="#presentation"><span class="n">1</span><span class="t">Qui je suis</span><span class="d">Mes formats, mon prix et le paiement</span></a></li>
+      <li><a href="#presentation"><span class="n">1</span><span class="t">Qui je suis</span><span class="d">Mes formats et pourquoi me choisir</span></a></li>
       <li><a href="#chaines"><span class="n">2</span><span class="t">Ils me font confiance</span><span class="d">Les chaînes et comptes pour qui je monte</span></a></li>
       <li><a href="#montages"><span class="n">3</span><span class="t">Mes montages</span><span class="d">Les vidéos que j'ai déjà réalisées</span></a></li>
-      <li><a href="#avis"><span class="n">4</span><span class="t">Avis clients</span><span class="d">Ce qu'ils en disent, avec les preuves</span></a></li>
-      <li><a href="#faq-s"><span class="n">5</span><span class="t">Questions fréquentes</span><span class="d">Prix, paiement, retouches</span></a></li>
-      <li><a href="#contact"><span class="n">6</span><span class="t">Me contacter</span><span class="d">Gmail, Discord et le reste</span></a></li>
+      <li id="toc-ba" hidden><a href="#avantapres"><span class="n">4</span><span class="t">Avant / après</span><span class="d">Mon montage en vidéo</span></a></li>
+      <li><a href="#avis"><span class="n">5</span><span class="t">Avis clients</span><span class="d">Ce qu'ils en disent, avec les preuves</span></a></li>
+      <li><a href="#faq-s"><span class="n">6</span><span class="t">Questions fréquentes</span><span class="d">Délais, retouches, formats</span></a></li>
+      <li><a href="#contact"><span class="n">7</span><span class="t">Me contacter</span><span class="d">Gmail, Discord et le reste</span></a></li>
     </ol>
   </nav>
 
@@ -386,39 +435,6 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
         <p>Je fais tous les ajustements nécessaires avant le rendu final.</p>
       </div>
     </div>
-
-    <div class="price">
-      <div class="amount">50 €<small>négociables</small></div>
-      <div>
-        <h3>Prix</h3>
-        <p>Crois-moi, je suis très abordable : pour une vidéo de 10 minutes avec une intro et un hook dynamiques, un montage efficace du début à la fin et quelques effets, on est sur 50 €, négociables.</p>
-      </div>
-    </div>
-
-    <div class="pay" id="pay">
-      <h3>Paiement</h3>
-      <p>Le paiement se fait sur PayPal, une fois la vidéo montée, en deux moitiés.</p>
-      <div class="bars" aria-hidden="true">
-        <div class="bar-row"><span>Vidéo</span>
-          <div class="bar">
-            <div class="seg vid a">1re moitié<div class="wm">filigrane</div></div>
-            <div class="seg vid b">2e moitié<div class="wm">filigrane</div></div>
-          </div>
-        </div>
-        <div class="bar-row"><span>Paiement</span>
-          <div class="bar">
-            <div class="seg cash a">1re moitié<div class="fill">payée</div></div>
-            <div class="seg cash b">2e moitié<div class="fill">payée</div></div>
-          </div>
-        </div>
-      </div>
-      <ol class="steps">
-        <li>Je t'envoie la vidéo entière avec un filigrane.</li>
-        <li>On fait les ajustements ensemble.</li>
-        <li>Je t'envoie la première moitié sans filigrane, tu m'envoies la moitié de l'argent.</li>
-        <li>Je t'envoie la seconde moitié, tu m'envoies le reste.</li>
-      </ol>
-    </div>
   </section>
 
   <section class="chap wrap" id="chaines">
@@ -433,20 +449,26 @@ footer{background:#0A0F0C;border-top:1px solid var(--line)}
     <div class="grid-v" id="videos"></div>
   </section>
 
+  <section class="chap wrap" id="avantapres" hidden>
+    <div class="chap-h"><span class="chap-n">4</span><h2>Avant / après</h2></div>
+    <p class="lead">Glisse la barre pour comparer. Touche l’écran une fois pour activer le son.</p>
+    <div id="compare"></div>
+  </section>
+
   <section class="chap wrap" id="avis">
-    <div class="chap-h"><span class="chap-n">4</span><h2>Avis clients</h2></div>
+    <div class="chap-h"><span class="chap-n">5</span><h2>Avis clients</h2></div>
     <div class="grid-r" id="reviews"></div>
   </section>
 
   <section class="chap wrap" id="faq-s">
-    <div class="chap-h"><span class="chap-n">5</span><h2>Questions fréquentes</h2></div>
+    <div class="chap-h"><span class="chap-n">6</span><h2>Questions fréquentes</h2></div>
     <div class="faq" id="faq"></div>
   </section>
 </main>
 
 <footer id="contact">
   <div class="wrap">
-    <div class="chap-h"><span class="chap-n">6</span><h2>Me contacter</h2></div>
+    <div class="chap-h"><span class="chap-n">7</span><h2>Me contacter</h2></div>
     <p class="hint">Touche un contact pour m'écrire, ou « Copier » pour récupérer mon pseudo.</p>
     <div class="grid-c" id="contacts"></div>
     <p class="copy">© Nexi, monteur vidéo</p>
