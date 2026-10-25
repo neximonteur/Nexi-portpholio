@@ -403,4 +403,428 @@ function setupFx() {
       c.style.setProperty("--ry", ((x - 0.5) * 8).toFixed(1) + "deg");
       c.style.setProperty("--rx", ((0.5 - y) * 6).toFixed(1) + "deg");
       c.style.setProperty("--mx", x * 100 + "%"); c.style.setProperty("--my", y * 100 + "%");
-      c.classList.
+      c.classList.add("tilt");
+    }
+    if (scrollY < 700) {
+      const r = $("#top").getBoundingClientRect(), g = $("#glow");
+      g.style.setProperty("--gx", Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)) + "%");
+      g.style.setProperty("--gy", Math.max(0, Math.min(100, ((e.clientY - r.top + 60) / 440) * 100)) + "%");
+    }
+  }, { passive: true });
+  ["pointerup", "pointercancel"].forEach((ev) => document.addEventListener(ev, untilt, { passive: true }));
+  document.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest && e.target.closest(".btn,.chip,.fab");
+    if (!b) return;
+    const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2;
+    const d = document.createElement("span");
+    d.className = "rip";
+    d.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+    b.appendChild(d); setTimeout(() => d.remove(), 650);
+  }, { passive: true });
+}
+
+function setupForm() {
+  const f = $("#cform"), msg = $("#cmsg"), wrap = $("#cwrap"), open = $("#copen");
+  open.addEventListener("click", () => {
+    const on = !wrap.classList.contains("open");
+    wrap.classList.toggle("open", on);
+    open.setAttribute("aria-expanded", String(on));
+    if (on) setTimeout(() => wrap.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" }), 280);
+  });
+  const vals = () => Object.fromEntries(new FormData(f));
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const v = vals();
+    if (!String(v.contact).trim() || !String(v.message).trim()) { msg.className = "msg err"; msg.textContent = tr("f_need"); return; }
+    const btn = f.querySelector("[type=submit]");
+    btn.disabled = true;
+    try {
+      const r = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(f)).toString() });
+      if (!r.ok) throw new Error("send");
+      f.reset(); msg.className = "msg"; msg.textContent = tr("f_ok");
+    } catch (err) { msg.className = "msg err"; msg.textContent = tr("f_err"); }
+    btn.disabled = false;
+  });
+  $("#cmail").addEventListener("click", () => {
+    const v = vals();
+    const body = (v.message || "") + "\n\n- " + (v.name || "") + " (" + (v.contact || "") + ")\n" + tr("f_type") + ": " + v.type + "\n" + tr("f_delay") + ": " + (v.delay || "");
+    location.href = "mailto:neximonteur@gmail.com?subject=" + encodeURIComponent("Montage vidéo - " + (v.name || "")) + "&body=" + encodeURIComponent(body);
+  });
+}
+
+/* ---------- Fenêtres ---------- */
+let lastFocus = null;
+function openModal(id) { lastFocus = document.activeElement; $(id).classList.add("open"); const x = $(id + " .x"); if (x) x.focus(); }
+function closeModals() {
+  document.querySelectorAll(".modal.open").forEach((m) => m.classList.remove("open"));
+  $("#vSheet").innerHTML = "";
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function previewHtml(v) {
+  const id = ytId(v.url);
+  if (!id) return `<div class="thumb">${thumbHtml(v)}</div>`;
+  const short = /\/shorts\//.test(v.url);
+  return `<div class="pv${short ? " short" : ""}"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?start=0&end=60&autoplay=1&playsinline=1&rel=0&modestbranding=1" title="${esc(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div><p class="pvn">${tr("prev")}</p>`;
+}
+function openVideo(id) {
+  const v = DATA.videos.find((x) => x.id === id);
+  if (!v) return;
+  $("#vSheet").innerHTML = `
+    <button class="x" data-close aria-label="Fermer">×</button>
+    ${previewHtml(v)}
+    <div class="vbody">
+      <div class="meta">${tag(v.category)}${Number(v.views) ? `<span>${Number(v.views).toLocaleString("fr-FR")} ${tr("v_views")}</span>` : ""}</div>
+      <h3>${esc(v.title)}</h3>
+      ${v.description ? `<p>${esc(v.description)}</p>` : ""}
+      <a class="btn main" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">${esc(tr("watch", { p: platformOf(v.url) }))}</a>
+    </div>`;
+  openModal("#vModal");
+}
+function openProof(id) {
+  const r = DATA.reviews.find((x) => x.id === id);
+  if (!r || !r.proof) return;
+  $("#pSheet").innerHTML = `<button class="x" data-close aria-label="Fermer">×</button><img src="${esc(imgSrc(r.proof))}" alt="Preuve de l'avis de ${esc(r.author)}">`;
+  openModal("#pModal");
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target;
+  const pt = t.closest("[data-pick-theme]");
+  if (pt) { try { localStorage.setItem(UKEY, pt.dataset.pickTheme); } catch (e2) { /* ok */ } themeFx(pt.dataset.pickTheme); return closeModals(); }
+  if (t.closest("[data-pick-reset]")) { try { localStorage.removeItem(UKEY); } catch (e2) { /* ok */ } themeFx(DATA.theme); return closeModals(); }
+  const pl = t.closest("[data-pick-lang]");
+  if (pl) { setLang(pl.dataset.pickLang); return closeModals(); }
+  if (t.closest("#btnTheme")) return openPicker("theme");
+  if (t.closest("#btnLang")) return openPicker("lang");
+  const card = t.closest(".card[data-id]");
+  if (card) return openVideo(card.dataset.id);
+  const chip = t.closest(".chip[data-cat]");
+  if (chip) { activeCat = chip.dataset.cat; renderFilters(); renderVideos(); return; }
+  const pr = t.closest("[data-proof]");
+  if (pr) return openProof(pr.dataset.proof);
+  if (t.closest("[data-close]") || t.classList.contains("modal")) return closeModals();
+  const op = t.closest("[data-open]");
+  if (op) {
+    const c = DATA.contacts[Number(op.dataset.open)];
+    const link = c && contactLink(c);
+    if (!c) return;
+    if (!link) return copyText(c.value);
+    if (/^(mailto|tel):/i.test(link)) location.href = link;
+    else window.open(link, "_blank", "noopener");
+    return;
+  }
+  const cp = t.closest("[data-copy]");
+  if (cp) { const c = DATA.contacts[Number(cp.dataset.copy)]; if (c) copyText(c.value); }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModals(); if ($("#admin").classList.contains("open")) closeAdmin(); } });
+
+/* ---------- Panneau admin ---------- */
+const PLATFORMS = ["YouTube", "TikTok", "Instagram", "Autre"];
+const SPEC = {
+  videos: {
+    label: "Vidéos", add: "Ajouter une vidéo",
+    fields: [
+      { k: "title", l: "Titre", t: "text", req: 1 },
+      { k: "url", l: "Lien de la vidéo (YouTube, TikTok, Instagram…)", t: "url", req: 1 },
+      { k: "category", l: "Catégorie", t: "cat", req: 1 },
+      { k: "views", l: "Nombre de vues", t: "number" },
+      { k: "description", l: "Description", t: "area" },
+      { k: "thumb", l: "Miniature (automatique pour YouTube, à ajouter pour TikTok / Instagram)", t: "image", max: 900 }
+    ],
+    title: (v) => v.title, sub: (v) => `${v.category} · ${fmtViews(v.views)} vues`
+  },
+  channels: {
+    label: "Chaînes", add: "Ajouter une chaîne ou un compte",
+    fields: [
+      { k: "name", l: "Nom de la chaîne / du compte", t: "text", req: 1 },
+      { k: "platform", l: "Plateforme", t: "platform" },
+      { k: "handle", l: "Pseudo (ex. @nom)", t: "text" },
+      { k: "url", l: "Lien vers la chaîne ou le compte", t: "url" },
+      { k: "image", l: "Photo de profil", t: "image", max: 240 }
+    ],
+    title: (c) => c.name, sub: (c) => c.platform || ""
+  },
+  reviews: {
+    label: "Avis", add: "Ajouter un avis",
+    fields: [
+      { k: "author", l: "Nom du client", t: "text", req: 1 },
+      { k: "role", l: "Chaîne ou activité (optionnel)", t: "text" },
+      { k: "text", l: "Son avis", t: "area", req: 1 },
+      { k: "proof", l: "Preuve (capture d'écran du message)", t: "image", max: 1400 }
+    ],
+    title: (r) => r.author, sub: (r) => (r.text || "").slice(0, 60) + (r.proof ? " · avec preuve" : "")
+  },
+  compare: {
+    label: "Avant / après", add: "Ajouter un avant / après",
+    fields: [
+      { k: "title", l: "Titre (facultatif)", t: "text" },
+      { k: "before", l: "Vidéo AVANT (lien .mp4 ou chemin, ex. /videos/avant.mp4)", t: "text", req: 1 },
+      { k: "after", l: "Vidéo APRÈS (lien .mp4 ou chemin, ex. /videos/apres.mp4)", t: "text", req: 1 },
+      { k: "caption", l: "Phrase sous la vidéo (facultatif)", t: "text" }
+    ],
+    title: (p) => p.title || "Avant / après", sub: (p) => (p.before || "").split("/").pop()
+  },
+  faq: {
+    label: "FAQ", add: "Ajouter une question",
+    fields: [
+      { k: "question", l: "Question", t: "text", req: 1 },
+      { k: "answer", l: "Réponse", t: "area", req: 1 }
+    ],
+    title: (q) => q.question, sub: (q) => (q.answer || "").slice(0, 60)
+  },
+  contacts: {
+    label: "Contacts", add: "Ajouter un contact",
+    fields: [
+      { k: "name", l: "Nom (ex. Gmail, Discord)", t: "text", req: 1 },
+      { k: "value", l: "Contact (adresse, pseudo…)", t: "text", req: 1 },
+      { k: "url", l: "Lien au toucher (optionnel)", t: "url" },
+      { k: "image", l: "Logo / image sur le côté", t: "image", max: 200, png: 1 }
+    ],
+    title: (c) => c.name, sub: (c) => c.value
+  }
+};
+const A = { tab: "videos", editId: null, vals: {}, msg: "", err: false };
+const adminEl = $("#admin");
+
+function setMsg(text, err) {
+  A.msg = text; A.err = !!err;
+  const s = adminEl.querySelector(".status");
+  if (s) { s.textContent = text; s.className = "status" + (err ? " err" : text && text.endsWith(".") ? " ok" : ""); }
+}
+
+function fieldHtml(f, val) {
+  val = val == null ? "" : String(val);
+  const id = "f_" + f.k;
+  const lab = `<label for="${id}">${esc(f.l)}${f.req ? " *" : ""}</label>`;
+  if (f.t === "area") return `<div class="fld">${lab}<textarea id="${id}" data-k="${f.k}">${esc(val)}</textarea></div>`;
+  if (f.t === "number") return `<div class="fld">${lab}<input id="${id}" data-k="${f.k}" type="number" inputmode="numeric" min="0" value="${esc(val)}"></div>`;
+  if (f.t === "platform") return `<div class="fld">${lab}<select id="${id}" data-k="${f.k}"><option value="">—</option>${PLATFORMS.map((p) => `<option${p === val ? " selected" : ""}>${p}</option>`).join("")}</select></div>`;
+  if (f.t === "cat") return `<div class="fld">${lab}<input id="${id}" data-k="${f.k}" list="catlist" value="${esc(val)}" placeholder="Choisis ou écris une nouvelle catégorie"><datalist id="catlist">${DATA.categories.map((c) => `<option value="${esc(c)}">`).join("")}</datalist></div>`;
+  if (f.t === "image") {
+    const mine = val.startsWith("img:");
+    return `<div class="fld"><label>${esc(f.l)}</label><div class="imgf">
+      ${val ? `<img class="pre" src="${esc(imgSrc(val))}" alt="Aperçu">` : ""}
+      <div class="row">
+        <label class="btn small ghost" style="cursor:pointer">Choisir une photo<input type="file" accept="image/*" hidden data-img="${f.k}"></label>
+        ${val ? `<button type="button" class="btn small danger" data-clear="${f.k}">Retirer</button>` : ""}
+      </div>
+      <input type="text" inputmode="url" autocapitalize="off" placeholder="ou colle un lien d'image" data-k="${f.k}" value="${mine ? "" : esc(val)}">
+    </div></div>`;
+  }
+  return `<div class="fld">${lab}<input id="${id}" data-k="${f.k}" type="text"${f.t === "url" ? ' inputmode="url" autocapitalize="off"' : ""} value="${esc(val)}"></div>`;
+}
+
+function renderAdmin() {
+  const top = adminEl.scrollTop;
+  if (!pwd) {
+    adminEl.innerHTML = `
+      <div class="admin-bar"><b>Espace admin</b><button data-aclose>Fermer</button></div>
+      <div class="admin-in"><div class="login">
+        <div class="fld"><label for="pw">Mot de passe</label><input id="pw" type="password" autocomplete="current-password"></div>
+        <button class="btn main" id="pwGo">Entrer</button>
+        <div class="status${A.err ? " err" : ""}">${esc(A.msg)}</div>
+      </div></div>`;
+    return;
+  }
+  const spec = SPEC[A.tab];
+  const items = DATA[A.tab].slice().reverse();
+  adminEl.innerHTML = `
+    <div class="admin-bar"><b>Espace admin</b><span><button data-alock>Verrouiller</button> <button data-aclose>Fermer</button></span></div>
+    <div class="admin-in">
+      <div class="sbox">
+        <h3>Thème du site</h3>
+        <div class="themes">${THEMES.map(([id, l, bg, ac]) => `<button data-theme-set="${id}" class="${DATA.theme === id ? "on" : ""}"><span class="sw" style="background:linear-gradient(135deg,${bg} 50%,${ac} 50%)"></span>${l}</button>`).join("")}</div>
+      </div>
+      <div class="sbox">
+        <h3>Mon statut</h3>
+        <div class="row">${[["actif", "Actif"], ["bientot", "Bientôt là"], ["inactif", "Pas actif"], ["autre", "Autre"]].map(([k, l]) => `<button data-state="${k}" class="${(DATA.status || {}).state === k ? "on" : ""}">${l}</button>`).join("")}</div>
+        ${(DATA.status || {}).state === "autre" ? `<input id="stText" type="text" maxlength="40" placeholder="Ton message (ex. En vacances jusqu'au 15)" value="${esc((DATA.status || {}).text || "")}"><button class="btn small main" style="margin-top:10px" data-stsave>Enregistrer le message</button>` : ""}
+      </div>
+      <div class="tabs">${Object.keys(SPEC).map((k) => `<button class="${k === A.tab ? "on" : ""}" data-tab="${k}">${SPEC[k].label} (${DATA[k].length})</button>`).join("")}</div>
+      <div class="alist">${items.length ? items.map((it) => `<button class="arow${it.id === A.editId ? " sel" : ""}" data-edit="${esc(it.id)}"><span class="t"><b>${esc(spec.title(it))}</b><small>${esc(spec.sub(it))}</small></span><span>Modifier</span></button>`).join("") : '<p class="empty">Rien pour l\'instant.</p>'}</div>
+      <div class="form" id="aform">
+        <h3>${A.editId ? "Modifier" : spec.add}</h3>
+        ${spec.fields.map((f) => fieldHtml(f, A.vals[f.k])).join("")}
+        <div class="status${A.err ? " err" : ""}">${esc(A.msg)}</div>
+        <div class="acts">
+          <button class="btn main" data-save>${A.editId ? "Enregistrer les changements" : "Ajouter"}</button>
+          ${A.editId ? '<button class="btn ghost" data-new>Annuler</button><button class="btn danger" data-del>Supprimer</button>' : ""}
+        </div>
+      </div>
+    </div>`;
+  adminEl.scrollTop = top;
+}
+
+function openAdmin() {
+  adminEl.classList.add("open");
+  document.body.style.overflow = "hidden";
+  A.msg = ""; A.err = false;
+  renderAdmin();
+}
+function closeAdmin() {
+  adminEl.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+async function shrink(file, max, png) {
+  let bmp;
+  if (window.createImageBitmap) { try { bmp = await createImageBitmap(file); } catch (e) { bmp = null; } }
+  if (!bmp) {
+    bmp = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("Image illisible."));
+      i.src = URL.createObjectURL(file);
+    });
+  }
+  const w = bmp.naturalWidth || bmp.width, h = bmp.naturalHeight || bmp.height;
+  const k = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement("canvas");
+  c.width = Math.round(w * k); c.height = Math.round(h * k);
+  const ctx = c.getContext("2d");
+  if (!png) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); }
+  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  const type = png ? "image/png" : "image/jpeg";
+  const blob = await new Promise((r) => c.toBlob(r, type, 0.82));
+  if (!blob) throw new Error("Impossible de préparer l'image.");
+  const b64 = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(",")[1]); fr.readAsDataURL(blob); });
+  return { type, b64 };
+}
+
+async function uploadFor(key, file) {
+  const f = SPEC[A.tab].fields.find((x) => x.k === key);
+  setMsg("Envoi de l'image…");
+  try {
+    const { type, b64 } = await shrink(file, f.max || 1000, f.png);
+    const r = await api({ action: "uploadImage", contentType: type, data: b64 });
+    A.vals[key] = "img:" + r.id;
+    A.msg = "Image prête. Pense à enregistrer."; A.err = false;
+    renderAdmin();
+  } catch (e) { setMsg(e.message, true); }
+}
+
+function lock(msg) {
+  pwd = ""; sessionStorage.removeItem("nexi_pwd");
+  A.msg = msg || ""; A.err = !!msg;
+  renderAdmin();
+}
+
+async function setStatus(state, text) {
+  if (state === "autre" && text === undefined) {
+    DATA.status = { state: "autre", text: (DATA.status && DATA.status.text) || "" };
+    return renderAdmin();
+  }
+  try {
+    const r = await api({ action: "setStatus", state, text: text || "" });
+    DATA = Object.assign(DATA, r.data);
+    renderAll(); renderAdmin();
+    toast("Statut mis à jour.");
+  } catch (e) { toast(e.message); }
+}
+
+async function save() {
+  const spec = SPEC[A.tab];
+  const miss = spec.fields.find((f) => f.req && !String(A.vals[f.k] ?? "").trim());
+  if (miss) return setMsg("Remplis le champ : " + miss.l, true);
+  setMsg("Enregistrement…");
+  try {
+    const body = A.editId
+      ? { action: "update", collection: A.tab, id: A.editId, item: A.vals }
+      : { action: "add", collection: A.tab, item: A.vals };
+    const r = await api(body);
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], compare: [], theme: "foret", status: { state: "actif", text: "" } }, r.data);
+    const was = A.editId ? "Modifié." : "Ajouté.";
+    A.editId = null; A.vals = {};
+    A.msg = was; A.err = false;
+    renderAll(); renderAdmin();
+  } catch (e) {
+    if (/Mot de passe/.test(e.message)) return lock("Mot de passe refusé, reconnecte-toi.");
+    setMsg(e.message, true);
+  }
+}
+
+async function del() {
+  if (!A.editId || !confirm("Supprimer définitivement ?")) return;
+  try {
+    const r = await api({ action: "delete", collection: A.tab, id: A.editId });
+    DATA = Object.assign({ categories: [], videos: [], channels: [], reviews: [], contacts: [], faq: [], compare: [], theme: "foret", status: { state: "actif", text: "" } }, r.data);
+    A.editId = null; A.vals = {};
+    A.msg = "Supprimé."; A.err = false;
+    renderAll(); renderAdmin();
+  } catch (e) { setMsg(e.message, true); }
+}
+
+async function login() {
+  const v = $("#pw", adminEl).value;
+  if (!v) return;
+  pwd = v;
+  try {
+    await api({ action: "checkPassword" });
+    sessionStorage.setItem("nexi_pwd", pwd);
+    A.msg = ""; A.err = false;
+    renderAdmin();
+  } catch (e) {
+    pwd = "";
+    setMsg(e.message, true);
+  }
+}
+
+adminEl.addEventListener("click", (e) => {
+  const t = e.target;
+  if (t.closest("[data-aclose]")) return closeAdmin();
+  if (t.closest("[data-alock]")) return lock();
+  if (t.closest("#pwGo")) return login();
+  const tab = t.closest("[data-tab]");
+  if (tab) { A.tab = tab.dataset.tab; A.editId = null; A.vals = {}; A.msg = ""; return renderAdmin(); }
+  const ed = t.closest("[data-edit]");
+  if (ed) {
+    const it = DATA[A.tab].find((x) => x.id === ed.dataset.edit);
+    if (it) { A.editId = it.id; A.vals = { ...it }; A.msg = ""; renderAdmin(); $("#aform", adminEl).scrollIntoView({ behavior: "smooth" }); }
+    return;
+  }
+  if (t.closest("[data-new]")) { A.editId = null; A.vals = {}; A.msg = ""; return renderAdmin(); }
+  const thb = t.closest("[data-theme-set]");
+  if (thb) return setTheme(thb.dataset.themeSet);
+  const stb = t.closest("[data-state]");
+  if (stb) return setStatus(stb.dataset.state);
+  if (t.closest("[data-stsave]")) return setStatus("autre", ($("#stText", adminEl) || {}).value || "");
+  if (t.closest("[data-save]")) return save();
+  if (t.closest("[data-del]")) return del();
+  const cl = t.closest("[data-clear]");
+  if (cl) { A.vals[cl.dataset.clear] = ""; return renderAdmin(); }
+});
+adminEl.addEventListener("input", (e) => { const k = e.target.dataset && e.target.dataset.k; if (k) A.vals[k] = e.target.value; });
+adminEl.addEventListener("change", (e) => {
+  const k = e.target.dataset && e.target.dataset.img;
+  if (k && e.target.files && e.target.files[0]) uploadFor(k, e.target.files[0]);
+});
+adminEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "pw") login(); });
+
+/* Accès caché : 5 touchers rapides sur le logo, ou taper « admin » au clavier */
+let taps = [];
+$("#logo").addEventListener("click", () => {
+  const now = Date.now();
+  taps = taps.filter((t) => now - t < 2500);
+  taps.push(now);
+  if (taps.length >= 5) { taps = []; openAdmin(); }
+});
+let keys = "";
+addEventListener("keydown", (e) => {
+  const tn = e.target && e.target.tagName;
+  if (tn === "INPUT" || tn === "TEXTAREA" || tn === "SELECT") return;
+  keys = (keys + e.key.toLowerCase()).slice(-5);
+  if (keys === "admin") { keys = ""; openAdmin(); }
+});
+
+/* ---------- Démarrage ---------- */
+if ("IntersectionObserver" in window) {
+  const tio = new IntersectionObserver((es) => { if (es[0].isIntersecting) { tio.disconnect(); runTimeline(); } }, { threshold: 0.3 });
+  tio.observe($("#tl"));
+} else runTimeline();
+setupScroll();
+setupFx();
+setupForm();
+document.addEventListener("langchange", () => { renderAll(); typeHero(); if (spyMark) spyMark(); });
+typeHero();
+load();
+})();
