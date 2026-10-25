@@ -231,6 +231,7 @@ const I18N = {
 "点击联系方式给我留言，或点“复制”获取我的账号。",
 "連絡先をタップしてメッセージ、または「コピー」でIDを取得できます。"
 ],
+"f_open":["Écrire un message","Write a message","Escribir un mensaje","写留言","メッセージを書く"],
 "f_title": [
 "Écris-moi directement",
 "Write to me directly",
@@ -506,3 +507,4 @@ function setLang(l, silent) {
   if (!l) { const n = (navigator.language || "fr").slice(0, 2).toLowerCase(); l = LANGS.some((x) => x[0] === n) ? n : "fr"; }
   setLang(l, true);
 })();
+  
