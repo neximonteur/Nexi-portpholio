@@ -507,4 +507,3 @@ function setLang(l, silent) {
   if (!l) { const n = (navigator.language || "fr").slice(0, 2).toLowerCase(); l = LANGS.some((x) => x[0] === n) ? n : "fr"; }
   setLang(l, true);
 })();
-  
